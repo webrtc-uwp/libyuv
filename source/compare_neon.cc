@@ -21,6 +21,15 @@ extern "C" {
 #if !defined(LIBYUV_DISABLE_NEON) && defined(__ARM_NEON__) && \
     !defined(__aarch64__)
 
+  /* !!! IMPORTANT: Following method has been ported to pure assembler to compare_neon.asm, 
+   * because MS Visual Studio doesn't support inline assembler for ARM.
+   *  
+   *  ALL CHANGES IN METHOD IMPLEMENTATION HAS TO BE DONE ALSO IN compare_neon.asm
+   *
+   * Eventually, only pure assembler implementation should be used for all platforms
+   * to avoid code duplication.
+  */
+
 uint32 SumSquareError_NEON(const uint8* src_a, const uint8* src_b, int count) {
   volatile uint32 sse;
   asm volatile (

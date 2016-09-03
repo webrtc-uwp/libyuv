@@ -16,8 +16,8 @@
       'type': '<(gtest_target_type)',
       'dependencies': [
         'libyuv.gyp:libyuv',
-        'testing/gtest.gyp:gtest',
-        'third_party/gflags/gflags.gyp:gflags',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
+        '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
       ],
       'direct_dependent_settings': {
         'defines': [
@@ -47,6 +47,11 @@
         'unit_test/video_common_test.cc',
       ],
       'conditions': [
+        ['OS=="win" and OS_RUNTIME=="winrt"', {
+          'defines': [
+            'WINRT',
+          ],
+        }],
         ['OS=="linux"', {
           'cflags': [
             '-fexceptions',
@@ -86,6 +91,7 @@
         [ '(target_arch == "armv7" or target_arch == "armv7s" \
           or (target_arch == "arm" and arm_version >= 7) \
           or target_arch == "arm64") \
+          or winrt_platform=="win_phone" or winrt_platform=="win10_arm" \
           and (arm_neon == 1 or arm_neon_optional == 1)', {
           'defines': [
             'LIBYUV_NEON'
@@ -204,7 +210,7 @@
             'native_lib_target': 'libyuv_unittest',
             'gyp_managed_install': 0,
           },
-          'includes': [ 'build/java_apk.gypi' ],
+          #'includes': [ 'build/java_apk.gypi' ],
           'dependencies': [
             '<(DEPTH)/base/base.gyp:base_java',
             '<(DEPTH)/build/android/pylib/device/commands/commands.gyp:chromium_commands',

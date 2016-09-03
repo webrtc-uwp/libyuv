@@ -280,7 +280,7 @@ extern "C" {
 #define HAS_ARGBTORGB565ROW_NEON
 #define HAS_ARGBTOUV411ROW_NEON
 #define HAS_ARGBTOUV444ROW_NEON
-#define HAS_ARGBTOUVJROW_NEON
+#define HAS_ARGBTOUVJROW_NEON   
 #define HAS_ARGBTOUVROW_NEON
 #define HAS_ARGBTOYJROW_NEON
 #define HAS_ARGBTOYROW_NEON
@@ -537,7 +537,7 @@ extern const struct YuvConstants kYvuH709Constants;  // BT.709
     #op " $" #sel ",%%" #reg ","#offset "(%" #base ",%" #index "," #scale ")\n"
 #endif  // defined(__native_client__) && defined(__x86_64__)
 
-#if defined(__arm__) || defined(__aarch64__)
+#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM)
 #undef MEMACCESS
 #if defined(__native_client__)
 #define MEMACCESS(base) ".p2align 3\nbic %" #base ", #0xc0000000\n"
