@@ -118,4 +118,5 @@ libyuv_unittest
 libyuv_arm.lib
 source/*.o
 
-
+*_win10_*.vcxpro*
+*_win10_*.sln
