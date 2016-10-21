@@ -16,8 +16,8 @@
       'type': '<(gtest_target_type)',
       'dependencies': [
         'libyuv.gyp:libyuv',
-        '<(DEPTH)/testing/gtest.gyp:gtest',
-        '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
+        '(DEPTH)/testing/gtest.gyp:gtest',
+        '(DEPTH)/third_party/gflags/gflags.gyp:gflags',
       ],
       'direct_dependent_settings': {
         'defines': [
@@ -95,13 +95,6 @@
           and (arm_neon == 1 or arm_neon_optional == 1)', {
           'defines': [
             'LIBYUV_NEON'
-          ],
-        }],
-        # MemorySanitizer does not support assembly code yet.
-        # http://crbug.com/344505
-        [ 'msan == 1', {
-          'defines': [
-            'LIBYUV_DISABLE_X86',
           ],
         }],
       ], # conditions
@@ -194,30 +187,16 @@
     ['OS=="android"', {
       'targets': [
         {
-          # TODO(kjellander): Figure out what to change in build/apk_test.gypi
-          # to it can be used instead of the copied code below. Using it in its
-          # current version was not possible, since the target starts with 'lib',
-          # which somewhere confuses the variables.
-          'target_name': 'libyuv_unittest_apk',
+          'target_name': 'yuv_unittest_apk',
           'type': 'none',
           'variables': {
-            # These are used to configure java_apk.gypi included below.
-            'test_type': 'gtest',
-            'apk_name': 'libyuv_unittest',
-            'intermediate_dir': '<(PRODUCT_DIR)/libyuv_unittest_apk',
-            'final_apk_path': '<(intermediate_dir)/libyuv_unittest-debug.apk',
-            'java_in_dir': '<(DEPTH)/testing/android/native_test/java',
-            'native_lib_target': 'libyuv_unittest',
-            'gyp_managed_install': 0,
+            'test_suite_name': 'yuv_unittest',
+            'input_shlib_path': '<(SHARED_LIB_DIR)/(SHARED_LIB_PREFIX)libyuv_unittest<(SHARED_LIB_SUFFIX)',
           },
-          #'includes': [ 'build/java_apk.gypi' ],
+          'includes': [
+            'build/apk_test.gypi',
+          ],
           'dependencies': [
-            '<(DEPTH)/base/base.gyp:base_java',
-            '<(DEPTH)/build/android/pylib/device/commands/commands.gyp:chromium_commands',
-            '<(DEPTH)/build/android/pylib/remote/device/dummy/dummy.gyp:remote_device_dummy_apk',
-            '<(DEPTH)/testing/android/appurify_support.gyp:appurify_support_java',
-            '<(DEPTH)/testing/android/on_device_instrumentation.gyp:reporter_java',
-            '<(DEPTH)/tools/android/android_tools.gyp:android_tools',
             'libyuv_unittest',
           ],
         },

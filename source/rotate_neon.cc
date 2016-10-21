@@ -36,7 +36,7 @@ static uvec8 kVTbl4x4Transpose =
 void TransposeWx8_NEON(const uint8* src, int src_stride,
                        uint8* dst, int dst_stride,
                        int width) {
-  const uint8* src_temp = NULL;
+  const uint8* src_temp;
   asm volatile (
     // loops are on blocks of 8. loop will stop when
     // counter gets to or below 0. starting the counter
@@ -238,7 +238,7 @@ void TransposeWx8_NEON(const uint8* src, int src_stride,
 
     "4:                                        \n"
 
-    : "+r"(src_temp),          // %0
+    : "=&r"(src_temp),         // %0
       "+r"(src),               // %1
       "+r"(src_stride),        // %2
       "+r"(dst),               // %3
@@ -256,7 +256,7 @@ void TransposeUVWx8_NEON(const uint8* src, int src_stride,
                          uint8* dst_a, int dst_stride_a,
                          uint8* dst_b, int dst_stride_b,
                          int width) {
-  const uint8* src_temp = NULL;
+  const uint8* src_temp;
   asm volatile (
     // loops are on blocks of 8. loop will stop when
     // counter gets to or below 0. starting the counter
@@ -521,7 +521,7 @@ void TransposeUVWx8_NEON(const uint8* src, int src_stride,
 
     "4:                                        \n"
 
-    : "+r"(src_temp),            // %0
+    : "=&r"(src_temp),           // %0
       "+r"(src),                 // %1
       "+r"(src_stride),          // %2
       "+r"(dst_a),               // %3

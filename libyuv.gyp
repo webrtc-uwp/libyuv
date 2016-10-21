@@ -29,8 +29,7 @@
     'conditions': [
        ['(OS_RUNTIME=="winrt" and (winrt_platform=="win_phone" or winrt_platform=="win10_arm")) or (target_arch == "armv7" or target_arch == "armv7s" or \
        (target_arch == "arm" and arm_version >= 7) or target_arch == "arm64")\
-       and (arm_neon == 1 or arm_neon_optional == 1)',
-       {
+       and (arm_neon == 1 or arm_neon_optional == 1)', {
          'build_neon': 1,
        }],
     ],
@@ -47,6 +46,12 @@
       # Allows libyuv.a redistributable library without external dependencies.
       'standalone_static_library': 1,
       'conditions': [
+       # Disable -Wunused-parameter
+        ['clang == 1', {
+          'cflags': [
+            '-Wno-unused-parameter',
+         ],
+        }],
         ['build_neon != 0', {
           'defines': [
             'LIBYUV_NEON',
@@ -55,6 +60,7 @@
             '-mfpu=vfp',
             '-mfpu=vfpv3',
             '-mfpu=vfpv3-d16',
+            # '-mthumb',  # arm32 not thumb
           ],
           'conditions': [
             # Disable LTO in libyuv_neon target due to gcc 4.9 compiler bug.
@@ -68,6 +74,7 @@
             ['target_arch != "arm64"', {
               'cflags': [
                 '-mfpu=neon',
+                # '-marm',  # arm32 not thumb
               ],
             }],
             ['OS_RUNTIME=="winrt" and (winrt_platform=="win_phone" or winrt_platform=="win10_arm")', {
@@ -123,13 +130,6 @@
                 ],
               }
             }],
-          ],
-        }],
-        # MemorySanitizer does not support assembly code yet.
-        # http://crbug.com/344505
-        [ 'msan == 1', {
-          'defines': [
-            'LIBYUV_DISABLE_X86',
           ],
         }],
       ], #conditions
