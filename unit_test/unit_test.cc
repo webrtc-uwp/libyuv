@@ -30,10 +30,6 @@ DEFINE_int32(libyuv_flags, 0,
 DEFINE_int32(libyuv_cpu_info, 0,
              "cpu flags for benchmark code. 1 = C, -1 = SIMD");
 
-#if defined WINRT
-#define getenv(x) NULL
-#endif
-
 // For quicker unittests, default is 128 x 72.  But when benchmarking,
 // default to 720p.  Allow size to specify.
 // Set flags to -1 for benchmarking to avoid slower C code.
@@ -93,7 +89,6 @@ LibYUVConvertTest::LibYUVConvertTest() :
 LibYUVColorTest::LibYUVColorTest() :
     benchmark_iterations_(BENCHMARK_ITERATIONS), benchmark_width_(128),
     benchmark_height_(72), disable_cpu_flags_(1), benchmark_cpu_info_(-1) {
-
   const char* repeat = getenv("LIBYUV_REPEAT");
   if (repeat) {
     benchmark_iterations_ = atoi(repeat);  // NOLINT
@@ -157,30 +152,21 @@ LibYUVScaleTest::LibYUVScaleTest() :
     benchmark_width_ = 1280;
     benchmark_height_ = 720;
   }
-  const char* width = NULL;
-#if !defined(WINRT) // WinRT doesn't support environment variables.
-  width = getenv("LIBYUV_WIDTH");
-#endif
+  const char* width = getenv("LIBYUV_WIDTH");
   if (width) {
     benchmark_width_ = atoi(width);  // NOLINT
   }
   if (FLAGS_libyuv_width) {
     benchmark_width_ = FLAGS_libyuv_width;
   }
-  const char* height = NULL;
-#if !defined(WINRT) // WinRT doesn't support environment variables.
-  height = getenv("LIBYUV_HEIGHT");
-#endif
+  const char* height = getenv("LIBYUV_HEIGHT");
   if (height) {
     benchmark_height_ = atoi(height);  // NOLINT
   }
   if (FLAGS_libyuv_height) {
     benchmark_height_ = FLAGS_libyuv_height;
   }
-  const char* cpu_flags = NULL;
-#if !defined(WINRT) // WinRT doesn't support environment variables.
-  cpu_flags = getenv("LIBYUV_FLAGS");
-#endif
+  const char* cpu_flags = getenv("LIBYUV_FLAGS");
   if (cpu_flags) {
     disable_cpu_flags_ = atoi(cpu_flags);  // NOLINT
   }
@@ -369,4 +355,4 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   return RUN_ALL_TESTS();
 }
-#endif
+#endif // !defined(WINRT)

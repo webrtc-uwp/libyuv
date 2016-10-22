@@ -606,6 +606,10 @@ ScaleAddRows_NEON PROC
 
 dx_offset DCD  0, 1, 2, 3
 
+; The NEON version mimics this formula:
+; #define BLENDER(a, b, f) (uint8)((int)(a) +
+;    ((int)(f) * ((int)(b) - (int)(a)) >> 16))
+
 ScaleFilterCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_ptr
@@ -652,8 +656,8 @@ ScaleFilterCols_NEON PROC
   vmovl.u16  q10, d21
   vmul.s32   q11, q11, q13
   vmul.s32   q12, q12, q10
-  vshrn.s32  d18, q11, #16
-  vshrn.s32  d19, q12, #16
+  vrshrn.s32  d18, q11, #16
+  vrshrn.s32  d19, q12, #16
   vadd.s16   q8, q8, q9
   vmovn.s16  d6, q8
 

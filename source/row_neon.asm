@@ -74,6 +74,7 @@
   EXPORT BGRAToUVRow_NEON
   EXPORT ABGRToUVRow_NEON
   EXPORT RGBAToUVRow_NEON
+  EXPORT ARGBExtractAlphaRow_NEON
   EXPORT ARGBToYJRow_NEON
   EXPORT I422ToUYVYRow_NEON
   EXPORT I422ToYUY2Row_NEON
@@ -250,33 +251,22 @@ kYToRgb     DCD   0x0101 * YG, 0, 0, 0
 
   MACRO
   ARGBTOARGB1555
-    vshr.u8    q10, q10, #3                     ; B
-    vshr.u8    d22, d22, #3                     ; R
-    vshr.u8    d23, d23, #7                     ; A
-    vmovl.u8   q8, d20                          ; B
-    vmovl.u8   q9, d21                          ; G
-    vmovl.u8   q10, d22                         ; R
-    vmovl.u8   q11, d23                         ; A
-    vshl.u16   q9, q9, #5                       ; G
-    vshl.u16   q10, q10, #10                    ; R
-    vshl.u16   q11, q11, #15                    ; A
-    vorr       q0, q8, q9                       ; BG
-    vorr       q1, q10, q11                     ; RA
-    vorr       q0, q0, q1                       ; BGRA
+    vshll.u8    q0, d23, #8                     ; A
+    vshll.u8    q8, d22, #8                     ; R
+    vshll.u8    q9, d21, #8                     ; G
+    vshll.u8    q10, d20, #8                    ; B
+    vsri.16     q0, q8, #1                      ; AR
+    vsri.16     q0, q9, #6                      ; ARG
+    vsri.16     q0, q10, #11                    ; ARGB
   MEND
 
   MACRO
   ARGBTORGB565
-    vshr.u8    d20, d20, #3                     ; B
-    vshr.u8    d21, d21, #2                     ; G
-    vshr.u8    d22, d22, #3                     ; R
-    vmovl.u8   q8, d20                          ; B
-    vmovl.u8   q9, d21                          ; G
-    vmovl.u8   q10, d22                         ; R
-    vshl.u16   q9, q9, #5                       ; G
-    vshl.u16   q10, q10, #11                    ; R
-    vorr       q0, q8, q9                       ; BG
-    vorr       q0, q0, q10                      ; BGR
+    vshll.u8    q0, d22, #8                     ; R
+    vshll.u8    q8, d21, #8                     ; G
+    vshll.u8    q9, d20, #8                     ; B
+    vsri.16     q0, q8, #5                      ; RG
+    vsri.16     q0, q9, #11                     ; RGB
   MEND
 
   MACRO
@@ -2276,6 +2266,26 @@ BGRAToUVRow_NEON PROC
   bx		  	lr
   ENDP
 
+ARGBExtractAlphaRow_NEON PROC
+  ; input
+  ;     r0 = const uint8* src_argb
+  ;     r1 = uint8* dst_y
+  ;     r2 = int pix
+  vpush      {q0 - q3}
+
+1
+  MEMACCESS 0
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels
+  subs       r2, r2, #16                      ; 16 processed per loop
+  MEMACCESS 1
+  vst1.8     {q3}, [r1]!                      ; store 16 A's.
+  bgt        %b1
+
+  vpop      {q0 - q3}
+  bx        lr
+  ENDP
+
 ARGBToYJRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -3263,7 +3273,6 @@ InterpolateRow_NEON PROC
   bx			  lr
   ENDP
 
-; TODO(fbarchard): fix vqshrun in ARGBMultiplyRow_NEON PROC and reenable.
 ; Multiply 2 rows of ARGB pixels together, 8 pixels at a time.
 ARGBMultiplyRow_NEON PROC
    ; input
