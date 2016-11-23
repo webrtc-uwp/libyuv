@@ -16,8 +16,8 @@
       'type': '<(gtest_target_type)',
       'dependencies': [
         'libyuv.gyp:libyuv',
-        '(DEPTH)/testing/gtest.gyp:gtest',
-        '(DEPTH)/third_party/gflags/gflags.gyp:gflags',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
+        '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
       ],
       'direct_dependent_settings': {
         'defines': [
@@ -194,7 +194,7 @@
             'input_shlib_path': '<(SHARED_LIB_DIR)/(SHARED_LIB_PREFIX)libyuv_unittest<(SHARED_LIB_SUFFIX)',
           },
           'includes': [
-            'build/apk_test.gypi',
+            # 'build/apk_test.gypi',
           ],
           'dependencies': [
             'libyuv_unittest',
