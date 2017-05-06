@@ -8,7 +8,9 @@
 
 {
   'variables': {
-    'libyuv_disable_jpeg%': 0,
+    # Can be enabled if your jpeg has GYP support.
+    'libyuv_disable_jpeg%': 1,
+    'mips_msa%': 0,  # Default to msa off.
   },
   'targets': [
     {
@@ -57,11 +59,6 @@
             '-fexceptions',
           ],
         }],
-        [ 'OS == "ios" and target_subarch == 64', {
-          'defines': [
-            'LIBYUV_DISABLE_NEON'
-          ],
-        }],
         [ 'OS == "ios"', {
           'xcode_settings': {
             'DEBUGGING_SYMBOLS': 'YES',
@@ -97,12 +94,18 @@
             'LIBYUV_NEON'
           ],
         }],
+        [ '(target_arch == "mipsel" or target_arch == "mips64el") \
+          and (mips_msa == 1)', {
+          'defines': [
+            'LIBYUV_MSA'
+          ],
+        }],
       ], # conditions
       'defines': [
         # Enable the following 3 macros to turn off assembly for specified CPU.
         # 'LIBYUV_DISABLE_X86',
         # 'LIBYUV_DISABLE_NEON',
-        # 'LIBYUV_DISABLE_MIPS',
+        # 'LIBYUV_DISABLE_DSPR2',
         # Enable the following macro to build libyuv as a shared library (dll).
         # 'LIBYUV_USING_SHARED_LIBRARY',
       ],
@@ -157,12 +160,6 @@
         'libyuv.gyp:libyuv',
       ],
       'conditions': [
-        [ 'OS == "ios" and target_subarch == 64', {
-          'defines': [
-            'LIBYUV_DISABLE_NEON'
-          ],
-        }],
-
         [ 'OS != "ios" and libyuv_disable_jpeg != 1', {
           'defines': [
             'HAVE_JPEG',
