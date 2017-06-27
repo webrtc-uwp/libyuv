@@ -49,9 +49,9 @@
         'unit_test/video_common_test.cc',
       ],
       'conditions': [
-        ['OS=="win" and OS_RUNTIME=="winrt"', {
+        ['OS=="win" and OS_RUNTIME=="winuwp"', {
           'defines': [
-            'WINRT',
+            'WINUWP',
           ],
         }],
         ['OS=="linux"', {
@@ -88,7 +88,7 @@
         [ '(target_arch == "armv7" or target_arch == "armv7s" \
           or (target_arch == "arm" and arm_version >= 7) \
           or target_arch == "arm64") \
-          or winrt_platform=="win_phone" or winrt_platform=="win10_arm" \
+          or winuwp_platform=="win_phone" or winuwp_platform=="win10_arm" \
           and (arm_neon == 1 or arm_neon_optional == 1)', {
           'defines': [
             'LIBYUV_NEON'

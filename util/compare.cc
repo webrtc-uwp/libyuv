@@ -17,7 +17,7 @@
 #include "libyuv/compare.h"
 #include "libyuv/version.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   if (argc < 1) {
     printf("libyuv compare v%d\n", LIBYUV_VERSION);
     printf("compare file1.yuv file2.yuv\n");
@@ -62,4 +62,5 @@ int main(int argc, char** argv) {
     fclose(fin2);
   }
   fclose(fin1);
+  return 0;
 }

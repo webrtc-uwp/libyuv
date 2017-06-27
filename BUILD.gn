@@ -40,7 +40,7 @@ group("libyuv") {
   public_configs = [ ":libyuv_config" ]
 
   if (is_win && target_cpu == "x64") {
-    if (is_winrt) {
+    if (is_winuwp) {
       public_deps = [
         ":libyuv_internal",
       ]
@@ -124,6 +124,9 @@ static_library("libyuv_internal") {
   if (!is_ios) {
     defines += [ "HAVE_JPEG" ]
     deps += [ "//third_party:jpeg" ]
+  }
+  if (is_winuwp) {
+    deps += [ "//third_party/winuwp_compat:force_include_std" ]
   }
 
   if (libyuv_use_neon) {
@@ -263,6 +266,9 @@ if (libyuv_include_tests) {
     if (is_android) {
       deps += [ "//testing/android/native_test:native_test_native_code" ]
     }
+    if (is_winuwp) {
+      deps += [ "//third_party/winuwp_compat:force_include_std" ]
+    }
 
     # TODO(YangZhang): These lines can be removed when high accuracy
     # YUV to RGB to Neon is ported.
@@ -293,6 +299,9 @@ if (libyuv_include_tests) {
     if (is_linux) {
       cflags = [ "-fexceptions" ]
     }
+    if (is_winuwp) {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
+    }
   }
 
   executable("convert") {
@@ -305,6 +314,9 @@ if (libyuv_include_tests) {
     ]
     if (is_linux) {
       cflags = [ "-fexceptions" ]
+    }
+    if (is_winuwp) {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 
@@ -321,6 +333,9 @@ if (libyuv_include_tests) {
 
     if (!is_ios && !libyuv_disable_jpeg) {
       defines = [ "HAVE_JPEG" ]
+    }
+    if (is_winuwp) {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 

@@ -388,8 +388,7 @@ LibYUVBaseTest::LibYUVBaseTest()
                        1280.0);
 }
 
-#if !defined(WINRT)
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   // AllowCommandLineParsing allows us to ignore flags passed on to us by
   // Chromium build bots without having to explicitly disable them.
@@ -397,4 +396,3 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   return RUN_ALL_TESTS();
 }
-#endif // !defined(WINRT)

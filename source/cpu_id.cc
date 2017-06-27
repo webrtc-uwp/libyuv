@@ -29,7 +29,7 @@
 
 #include "libyuv/basic_types.h"  // For CPU_X86
 
-#if defined(WINRT) && defined(_M_ARM)
+#if defined(WINWUP) && defined(_M_ARM)
   #include <windows.h>
 #endif
 
@@ -202,7 +202,7 @@ int cpu_info_ = 0;  // cpu_info is not initialized yet.
 
 // Test environment variable for disabling CPU features. Any non-zero value
 // to disable. Zero ignored to make it easy to set the variable on/off.
-#if !defined(__native_client__) && !defined(_M_ARM) && !defined(WINRT)
+#if !defined(__native_client__) && !defined(_M_ARM)
 
 static LIBYUV_BOOL TestEnv(const char* name) {
   const char* var = getenv(name);
@@ -321,7 +321,7 @@ LIBYUV_API SAFEBUFFERS int InitCpuFlags(void) {
     cpu_info &= ~kCpuHasNEON;
   }
 #endif  // __arm__
-#if defined (WINRT) && defined(_M_ARM)
+#if defined (WINUWP) && defined(_M_ARM)
   // Windows Runtime on ARM
   if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
   {

@@ -30,7 +30,7 @@
     'build_neon': 0,
     'build_msa': 0,
     'conditions': [
-       ['(OS_RUNTIME=="winrt" and (winrt_platform=="win_phone" or winrt_platform=="win10_arm")) or (target_arch == "armv7" or target_arch == "armv7s" or \
+       ['(OS_RUNTIME=="winuwp" and (winuwp_platform=="win_phone" or winuwp_platform=="win10_arm")) or (target_arch == "armv7" or target_arch == "armv7s" or \
        (target_arch == "arm" and arm_version >= 7) or target_arch == "arm64")\
        and (arm_neon == 1 or arm_neon_optional == 1)', {
          'build_neon': 1,
@@ -85,9 +85,9 @@
                 # '-marm',  # arm32 not thumb
               ],
             }],
-            ['OS_RUNTIME=="winrt" and (winrt_platform=="win_phone" or winrt_platform=="win10_arm")', {
+            ['OS_RUNTIME=="winuwp" and (winuwp_platform=="win_phone" or winuwp_platform=="win10_arm")', {
               'defines': [
-                'WINRT',
+                'WINUWP',
                 '__ARM_NEON__',
               ],
               'sources': [
