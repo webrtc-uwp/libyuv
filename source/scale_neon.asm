@@ -153,11 +153,11 @@ ScaleRowDown4Box_NEON PROC
 1
   MEMACCESS  0
   vld1.8     {q0}, [r0]!                       ; load up 16x4
-  MEMACCESS  3
-  vld1.8     {q1}, [r4]!
   MEMACCESS  4
-  vld1.8     {q2}, [r5]!
+  vld1.8     {q1}, [r4]!
   MEMACCESS  5
+  vld1.8     {q2}, [r5]!
+  MEMACCESS  6
   vld1.8     {q3}, [r6]!
   subs       r3, r3, #4
   vpaddl.u8  q0, q0
@@ -167,7 +167,7 @@ ScaleRowDown4Box_NEON PROC
   vpaddl.u16 q0, q0
   vrshrn.u32 d0, q0, #4                        ; divide by 16 w/rounding
   vmovn.u16  d0, q0
-  MEMACCESS  1
+  MEMACCESS  2
   vst1.32    {d0[0]}, [r2]!
   bgt        %b1
 
@@ -321,9 +321,9 @@ ScaleRowDown38_NEON PROC
   subs       r3, r3, #12
   vtbl.u8    d4, {d0, d1, d2, d3}, d6
   vtbl.u8    d5, {d0, d1, d2, d3}, d7
-  MEMACCESS(1)
+  MEMACCESS  2
   vst1.8     {d4}, [r2]!
-  MEMACCESS(1)
+  MEMACCESS  2
   vst1.32    {d5[0]}, [r2]!
   bgt        %b1
 
