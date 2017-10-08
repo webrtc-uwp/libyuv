@@ -30,32 +30,32 @@ HammingDistance_NEON PROC
   ;   "+r"(count),        %2 r2
   ;   "=r"(diff)          %3 r0
 
-  vpush       {q0-q4}
-  vpush       {d0-d1}
+  vpush      {q0-q4}
+  vpush      {d0-d1}
 
-  vmov.u16    q4, #0  ; accumulator
+  vmov.u16   q4, #0  ; accumulator
 
 1
-  vld1.8      {q0, q1}, [r0]!
-  vld1.8      {q2, q3}, [r1]!
-  veor.32     q0, q0, q2
-  veor.32     q1, q1, q3
-  vcnt.i8     q0, q0
-  vcnt.i8     q1, q1
-  subs        r2, r2, #32
-  vadd.u8     q0, q0, q1                     ; 16 byte counts
-  vpadal.u8   q4, q0                         ; 8 shorts
-  bgt         %b1
+  vld1.8     {q0, q1}, [r0]!
+  vld1.8     {q2, q3}, [r1]!
+  veor.32    q0, q0, q2
+  veor.32    q1, q1, q3
+  vcnt.i8    q0, q0
+  vcnt.i8    q1, q1
+  subs       r2, r2, #32
+  vadd.u8    q0, q0, q1                     ; 16 byte counts
+  vpadal.u8  q4, q0                         ; 8 shorts
+  bgt        %b1
 
-  vpaddl.u16  q0, q4                         ; 4 ints
-  vpadd.u32   d0, d0, d1
-  vpadd.u32   d0, d0, d0
-  vmov.32     r0, d0[0]
+  vpaddl.u16 q0, q4                         ; 4 ints
+  vpadd.u32  d0, d0, d1
+  vpadd.u32  d0, d0, d0
+  vmov.32    r0, d0[0]
 
-  vpop        {d0-d1}
-  vpop        {q0-q4}
+  vpop       {d0-d1}
+  vpop       {q0-q4}
 
-  bx        lr
+  bx         lr
   ENDP
 
 
@@ -72,9 +72,9 @@ SumSquareError_NEON PROC
   ;   "+r"(count),        %2 r2
   ;   "=r"(sse)           %3 r0
 
-  vpush {q0-q3}
-  vpush {q8-q11}
-  vpush {d0-d7}
+  vpush      {q0-q3}
+  vpush      {q8-q11}
+  vpush      {d0-d7}
 
   vmov.u8    q8, #0
   vmov.u8    q10, #0
@@ -100,11 +100,11 @@ SumSquareError_NEON PROC
   vadd.u64   d0, d2, d3
   vmov.32    r0, d0[0]
 
-  vpop      {d0-d7}
-  vpop      {q8-q11}
-  vpop      {q0-q3}
+  vpop       {d0-d7}
+  vpop       {q8-q11}
+  vpop       {q0-q3}
 
-  bx        lr
+  bx         lr
   ENDP
 
   END
