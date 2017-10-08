@@ -776,9 +776,8 @@ ScaleFilterCols_NEON PROC
   bx         lr
   ENDP
 
-
 ; 16x2 -> 16x1
-ScaleFilterCols_NEON PROC
+ScaleFilterRows_NEON PROC
   ; input
   ;   r0 = uint8* dst_ptr
   ;   r1 = uint8* src_ptr
@@ -878,108 +877,118 @@ ScaleFilterCols_NEON PROC
   bx           lr
   ENDP
 
-;************************
 ScaleARGBRowDown2_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = ptrdiff_t src_stride
-  ;     r2 = uint8* dst
-  ;     r3 = int dst_width
-  vpush      {q0 - q3}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = ptrdiff_t src_stride (ignored)
+  ;   r2 = uint8* dst
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst),          %1 r2
+  ;   "+r"(dst_width)     %2 r3
+
+  vpush      {q0-q3}
+
 1
   ; load even pixels into q0, odd into q1
-  MEMACCESS  0
   vld2.32    {q0, q1}, [r0]!
-  MEMACCESS  0
   vld2.32    {q2, q3}, [r0]!
   subs       r3, r3, #8               ; 8 processed per loop
-  MEMACCESS  1
   vst1.8     {q1}, [r2]!              ; store odd pixels
-  MEMACCESS  1
   vst1.8     {q3}, [r2]!
   bgt        %b1
-  vpop       {q0 - q3}
+
+  vpop       {q0-q3}
+
   bx         lr
   ENDP
-;************************
 
-
-
-;************************
 ScaleARGBRowDown2Linear_NEON PROC
   ; input
-  ;     r0 = uint8* src_argb
-  ;     r1 = ptrdiff_t src_stride
-  ;     r2 = uint8* dst_argb
-  ;     r3 = int dst_width
-  vpush      {q0 - q3}
+  ;   r0 = uint8* src_argb
+  ;   r1 = ptrdiff_t src_stride (ignored)
+  ;   r2 = uint8* dst_argb
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(dst_argb),     %1 r2
+  ;   "+r"(dst_width)     %2 r3
+
+  vpush      {q0-q3}
+  vpush      {d0-d7}
+
 1
-  MEMACCESS  0
   vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels.
-  MEMACCESS  0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB
+                                              ; pixels.
   subs       r3, r3, #8                       ; 8 processed per loop
   vpaddl.u8  q0, q0                           ; B 16 bytes -> 8 shorts.
   vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
   vpaddl.u8  q2, q2                           ; R 16 bytes -> 8 shorts.
   vpaddl.u8  q3, q3                           ; A 16 bytes -> 8 shorts.
-  vrshrn.u16 d0, q0, #1                       ; downshift, round and pack
+  vrshrn.u16 d0, q0, #1                       ; downshift, round and
+                                              ; pack
   vrshrn.u16 d1, q1, #1
   vrshrn.u16 d2, q2, #1
   vrshrn.u16 d3, q3, #1
-  MEMACCESS  1
   vst4.8     {d0, d1, d2, d3}, [r2]!
   bgt        %b1
 
+  vpop       {d0-d7}
+  vpop       {q0-q3}
 
-  vpop       {q0 - q3}
   bx         lr
   ENDP
-;************************
 
-;************************
 ScaleARGBRowDown2Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = ptrdiff_t src_stride
-  ;     r2 = uint8* dst
-  ;     r3 = int dst_width
-  vpush      {q0 - q3}
-  vpush      {q8 - q11}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = ptrdiff_t src_stride
+  ;   r2 = uint8* dst
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(src_stride),   %1 r1
+  ;   "+r"(dst),          %2 r2
+  ;   "+r"(dst_width)     %3 r3
+
+  vpush      {q0-q3}
+  vpush      {q8-q11}
+
   ; change the stride to row 2 pointer
   add        r1, r1, r0
 
 1
-  MEMACCESS  0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 argb pixels.
-  MEMACCESS  0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 argb pixels.
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB
+                                              ; pixels.
   subs       r3, r3, #8                       ; 8 processed per loop.
-  vpaddl.u8  q0, q0                           ; b 16 bytes -> 8 shorts.
-  vpaddl.u8  q1, q1                           ; g 16 bytes -> 8 shorts.
-  vpaddl.u8  q2, q2                           ; r 16 bytes -> 8 shorts.
-  vpaddl.u8  q3, q3                           ; a 16 bytes -> 8 shorts.
-  MEMACCESS  1
-  vld4.8     {d16, d18, d20, d22}, [r1]!      ; load 8 more argb pixels.
-  MEMACCESS  1
-  vld4.8     {d17, d19, d21, d23}, [r1]!      ; load last 8 argb pixels.
-  vpadal.u8  q0, q8                           ; b 16 bytes -> 8 shorts.
-  vpadal.u8  q1, q9                           ; g 16 bytes -> 8 shorts.
-  vpadal.u8  q2, q10                          ; r 16 bytes -> 8 shorts.
-  vpadal.u8  q3, q11                          ; a 16 bytes -> 8 shorts.
-  vrshrn.u16 d0, q0, #2                       ; downshift, round and pack
+  vpaddl.u8  q0, q0                           ; B 16 bytes -> 8 shorts.
+  vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
+  vpaddl.u8  q2, q2                           ; R 16 bytes -> 8 shorts.
+  vpaddl.u8  q3, q3                           ; A 16 bytes -> 8 shorts.
+  vld4.8     {d16, d18, d20, d22}, [r1]!      ; load 8 more ARGB
+                                              ; pixels.
+  vld4.8     {d17, d19, d21, d23}, [r1]!      ; load last 8 ARGB
+                                              ; pixels.
+  vpadal.u8  q0, q8                           ; B 16 bytes -> 8 shorts.
+  vpadal.u8  q1, q9                           ; G 16 bytes -> 8 shorts.
+  vpadal.u8  q2, q10                          ; R 16 bytes -> 8 shorts.
+  vpadal.u8  q3, q11                          ; A 16 bytes -> 8 shorts.
+  vrshrn.u16 d0, q0, #2                       ; downshift, round and
+                                              ; pack
   vrshrn.u16 d1, q1, #2
   vrshrn.u16 d2, q2, #2
   vrshrn.u16 d3, q3, #2
-  MEMACCESS  2
   vst4.8     {d0, d1, d2, d3}, [r2]!
   bgt        %b1
 
-  vpop       {q8 - q11}
-  vpop       {q0 - q3}
+  vpop       {q8-q11}
+  vpop       {q0-q3}
+
   bx         lr
   ENDP
-;************************
 
 ;************************
 ScaleARGBRowDownEven_NEON PROC
