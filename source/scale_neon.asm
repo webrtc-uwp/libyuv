@@ -990,67 +990,75 @@ ScaleARGBRowDown2Box_NEON PROC
   bx         lr
   ENDP
 
-;************************
+; Reads 4 pixels at a time.
+; Alignment requirement: src_argb 4 byte aligned.
 ScaleARGBRowDownEven_NEON PROC
   ; input
-  ;     r0 = uint8* src_argb
-  ;     r1 = ptrdiff_t src_stride
-  ;     r2 = int src_stepx
-  ;     r3 =  uint8* dst_argb
-  push      {r4, r12}
-  ldr       r4, [sp, #8]   ;int dst_width
-  vpush     {q0}
+  ;   r0 = uint8* src_argb
+  ;   r1 = ptrdiff_t src_stride
+  ;   r2 = int src_stepx
+  ;   r3 =  uint8* dst_argb
+  ;   r4 =  uint8* dst_width
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(dst_argb),     %1 r3
+  ;   "+r"(dst_width)     %2 r4
+  ;   "r"(src_stepx)      %3 r2
+
+  push       {r4, r12}
+  vpush      {q0}
+
+  ldr        r4, [sp, #8]                     ; int dst_width
 
   mov        r12, r2, lsl #2
+
 1
-  MEMACCESS  0
   vld1.32    {d0[0]}, [r0], r12
-  MEMACCESS  0
   vld1.32    {d0[1]}, [r0], r12
-  MEMACCESS  0
   vld1.32    {d1[0]}, [r0], r12
-  MEMACCESS  0
   vld1.32    {d1[1]}, [r0], r12
   subs       r4, r4, #4                       ; 4 pixels per loop.
-  MEMACCESS  1
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  vpop      {q0}
-  pop       {r4, r12}
+  vpop       {q0}
+  pop        {r4, r12}
+
   bx         lr
   ENDP
-;************************
 
-;************************
+; Reads 4 pixels at a time.
+; Alignment requirement: src_argb 4 byte aligned.
 ScaleARGBRowDownEvenBox_NEON PROC
   ; input
-  ;     r0 = uint8* src_argb
-  ;     r1 = ptrdiff_t src_stride
-  ;     r2 = int src_stepx
-  ;     r3 =  uint8* dst_argb
-  push      {r4, r12}
-  ldr       r4, [sp, #8]   ;int dst_width
-  vpush     {q0 - q3}
+  ;   r0 = uint8* src_argb
+  ;   r1 = ptrdiff_t src_stride
+  ;   r2 = int src_stepx
+  ;   r3 =  uint8* dst_argb
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(src_stride),   %1 r1
+  ;   "+r"(dst_argb),     %2 r3
+  ;   "+r"(dst_width)     %3 r4
+  ;    "r"(src_stepx)     %4 r2
+
+  push       {r4, r12}
+  vpush      {q0-q3}
+  vpush      {d0-d7}
+
+  ldr        r4, [sp, #8]                     ; int dst_width
 
   mov        r12, r2, lsl #2
   add        r1, r1, r0
 1
-  MEMACCESS  0
-  vld1.8     {d0}, [r0], r12                  ; Read 4 2x2 blocks -> 2x1
-  MEMACCESS  1
+  vld1.8     {d0}, [r0], r12                  ; Read 4 2x2 blocks ->
+                                              ; 2x1
   vld1.8     {d1}, [r1], r12
-  MEMACCESS  0
   vld1.8     {d2}, [r0], r12
-  MEMACCESS  1
   vld1.8     {d3}, [r1], r12
-  MEMACCESS  0
   vld1.8     {d4}, [r0], r12
-  MEMACCESS  1
   vld1.8     {d5}, [r1], r12
-  MEMACCESS  0
   vld1.8     {d6}, [r0], r12
-  MEMACCESS  1
   vld1.8     {d7}, [r1], r12
   vaddl.u8   q0, d0, d1
   vaddl.u8   q1, d2, d3
@@ -1063,15 +1071,16 @@ ScaleARGBRowDownEvenBox_NEON PROC
   vrshrn.u16 d0, q0, #2                       ; first 2 pixels.
   vrshrn.u16 d1, q2, #2                       ; next 2 pixels.
   subs       r4, r4, #4                       ; 4 pixels per loop.
-  MEMACCESS  2
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  vpop      {q0 - q3}
-  pop       {r4, r12}
+  vpop       {d0-d7}
+  vpop       {q0-q3}
+  pop        {r4, r12}
+
   bx         lr
   ENDP
-;************************
+
 
 ;************************
   ; TODO(Yang Zhang): Investigate less load instructions for
