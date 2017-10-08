@@ -373,7 +373,7 @@ ScaleRowDown38_NEON PROC
   vpush       {d0-d5}
   push        {r4}
 
-  adr         R4, kShuf38
+  adr         r4, kShuf38
 
   vld1.8      {q3}, [r4]
 1
@@ -391,76 +391,81 @@ ScaleRowDown38_NEON PROC
   bx          lr
   ENDP
 
-
-
-
-************************
+// 32x3 -> 12x1
 ScaleRowDown38_3_Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush     {q0-q3}
-  vpush     {q8, q9}
-  vpush     {q13-q15}
-  push      {r4-r7}
-  add       r4, r0, r1
-  add       r4, r4, r1      ; src_ptr + src_stride * 2
-  adr       r5, kMult38_Div6
-  adr       r6, kShuf38_2
-  adr       r7, kMult38_Div9
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width),    %2 r3
+  ;   "+r"(src_stride),   %3 r1
+  ;   "+r"(src_ptr1)      %4 r4
+  ;   "r"(&kMult38_Div6), %5 r5
+  ;   "r"(&kShuf38_2),    %6 r6
+  ;   "r"(&kMult38_Div9)  %7 r7
 
-  MEMACCESS  5
-  vld1.16    {q13}, [r5]
-  MEMACCESS  6
-  vld1.8     {q14}, [r6]
-  MEMACCESS  7
-  vld1.8     {q15}, [r7]
-  add        r1, r0
+  vpush       {q0-q3}
+  vpush       {q8-q9}
+  vpush       {q13-q15}
+  vpush       {d16-d19}
+  push        {r4-r7}
+
+  add         r4, r0, r1
+  add         r4, r4, r1      ; src_ptr + src_stride * 2
+
+  adr         r5, kMult38_Div6
+  adr         r6, kShuf38_2
+  adr         r7, kMult38_Div9
+
+  vld1.16     {q13}, [r5]
+  vld1.8      {q14}, [r6]
+  vld1.8      {q15}, [r7]
+  add         r1, r0
+
 1
   ; d0 = 00 40 01 41 02 42 03 43
   ; d1 = 10 50 11 51 12 52 13 53
   ; d2 = 20 60 21 61 22 62 23 63
   ; d3 = 30 70 31 71 32 72 33 73
-  MEMACCESS    0
-  vld4.8       {d0, d1, d2, d3}, [r0]!
-  MEMACCESS    3
-  vld4.8       {d4, d5, d6, d7}, [r1]!
-  MEMACCESS    4
-  vld4.8       {d16, d17, d18, d19}, [r4]!
-  subs         r3, r3, #12
+  vld4.8      {d0, d1, d2, d3}, [r0]!
+  vld4.8      {d4, d5, d6, d7}, [r1]!
+  vld4.8      {d16, d17, d18, d19}, [r4]!
+  subs        r3, r3, #12
 
   ; Shuffle the input data around to get align the data
   ;  so adjacent data can be added. 0,1 - 2,3 - 4,5 - 6,7
   ; d0 = 00 10 01 11 02 12 03 13
   ; d1 = 40 50 41 51 42 52 43 53
-  vtrn.u8      d0, d1
-  vtrn.u8      d4, d5
-  vtrn.u8      d16, d17
+  vtrn.u8     d0, d1
+  vtrn.u8     d4, d5
+  vtrn.u8     d16, d17
 
   ; d2 = 20 30 21 31 22 32 23 33
   ; d3 = 60 70 61 71 62 72 63 73
-  vtrn.u8      d2, d3
-  vtrn.u8      d6, d7
-  vtrn.u8      d18, d19
+  vtrn.u8     d2, d3
+  vtrn.u8     d6, d7
+  vtrn.u8     d18, d19
 
   ; d0 = 00+10 01+11 02+12 03+13
   ; d2 = 40+50 41+51 42+52 43+53
-  vpaddl.u8    q0, q0
-  vpaddl.u8    q2, q2
-  vpaddl.u8    q8, q8
+  vpaddl.u8   q0, q0
+  vpaddl.u8   q2, q2
+  vpaddl.u8   q8, q8
 
   ; d3 = 60+70 61+71 62+72 63+73
-  vpaddl.u8    d3, d3
-  vpaddl.u8    d7, d7
-  vpaddl.u8    d19, d19
+  vpaddl.u8   d3, d3
+  vpaddl.u8   d7, d7
+  vpaddl.u8   d19, d19
 
   ; combine source lines
-  vadd.u16     q0, q2
-  vadd.u16     q0, q8
-  vadd.u16     d4, d3, d7
-  vadd.u16     d4, d19
+  vadd.u16    q0, q2
+  vadd.u16    q0, q8
+  vadd.u16    d4, d3, d7
+  vadd.u16    d4, d19
 
   ; dst_ptr[3] = (s[6 + st * 0] + s[7 + st * 0]
   ;             + s[6 + st * 1] + s[7 + st * 1]
@@ -474,24 +479,24 @@ ScaleRowDown38_3_Box_NEON PROC
   ;  registers are already expanded. Then do transposes
   ;  to get aligned.
   ; q2 = xx 20 xx 30 xx 21 xx 31 xx 22 xx 32 xx 23 xx 33
-  vmovl.u8     q1, d2
-  vmovl.u8     q3, d6
-  vmovl.u8     q9, d18
+  vmovl.u8    q1, d2
+  vmovl.u8    q3, d6
+  vmovl.u8    q9, d18
 
   ; combine source lines
-  vadd.u16     q1, q3
-  vadd.u16     q1, q9
+  vadd.u16    q1, q3
+  vadd.u16    q1, q9
 
   ; d4 = xx 20 xx 30 xx 22 xx 32
   ; d5 = xx 21 xx 31 xx 23 xx 33
-  vtrn.u32     d2, d3
+  vtrn.u32    d2, d3
 
   ; d4 = xx 20 xx 21 xx 22 xx 23
   ; d5 = xx 30 xx 31 xx 32 xx 33
-  vtrn.u16     d2, d3
+  vtrn.u16    d2, d3
 
   ; 0+1+2, 3+4+5
-  vadd.u16     q0, q1
+  vadd.u16    q0, q1
 
   ; Need to divide, but can't downshift as the the value
   ;  isn't a power of 2. So multiply by 65536 / n
@@ -500,26 +505,31 @@ ScaleRowDown38_3_Box_NEON PROC
 
   ; Align for table lookup, vtbl requires registers to
   ;  be adjacent
-  vmov.u8      d2, d4
+  vmov.u8     d2, d4
 
-  vtbl.u8      d3, {d0, d1, d2}, d28
-  vtbl.u8      d4, {d0, d1, d2}, d29
+  vtbl.u8     d3, {d0, d1, d2}, d28
+  vtbl.u8     d4, {d0, d1, d2}, d29
 
-  MEMACCESS    1
-  vst1.8       {d3}, [r2]!
-  MEMACCESS    1
-  vst1.32      {d4[0]}, [r2]!
-  bgt          %b1
+  vst1.8      {d3}, [r2]!
+  vst1.32     {d4[0]}, [r2]!
+  bgt         %b1
 
-  pop       {r4-r7}
-  vpop      {q13-q15}
-  vpop      {q8, q9}
-  vpop      {q0-q3}
-  bx        lr
+  pop         {r4-r7}
+  vpop        {d16-d19}
+  vpop        {q13-q15}
+  vpop        {q8-q9}
+  vpop        {q0-q3}
+
+  bx          lr
   ENDP
-************************
 
-************************
+
+
+
+
+
+
+;************************
 ScaleRowDown38_2_Box_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -622,9 +632,9 @@ ScaleRowDown38_2_Box_NEON PROC
   vpop      {q0-q3}
   bx        lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ScaleAddRows_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -659,9 +669,9 @@ ScaleAddRows_NEON PROC
   pop       {r4, r5, r12}
   bx        lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
   MACRO
@@ -672,7 +682,7 @@ ScaleAddRows_NEON PROC
   MEMACCESS  6
   vld2.8     {d6[$n], d7[$n]}, [r6]
   MEND
-************************
+;************************
 
 dx_offset DCD  0, 1, 2, 3
 
@@ -680,7 +690,7 @@ dx_offset DCD  0, 1, 2, 3
 ; #define BLENDER(a, b, f) (uint8)((int)(a) +
 ;    ((int)(f) * ((int)(b) - (int)(a)) >> 16))
 
-************************
+;************************
 ScaleFilterCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_ptr
@@ -744,9 +754,9 @@ ScaleFilterCols_NEON PROC
   pop        {r4-r6}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ScaleARGBRowDown2_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -769,11 +779,11 @@ ScaleARGBRowDown2_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
-************************
+;************************
 
 
 
-************************
+;************************
 ScaleARGBRowDown2Linear_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -803,9 +813,9 @@ ScaleARGBRowDown2Linear_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ScaleARGBRowDown2Box_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -847,9 +857,9 @@ ScaleARGBRowDown2Box_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ScaleARGBRowDownEven_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -879,9 +889,9 @@ ScaleARGBRowDownEven_NEON PROC
   pop       {r4, r12}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
 ScaleARGBRowDownEvenBox_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -930,9 +940,9 @@ ScaleARGBRowDownEvenBox_NEON PROC
   pop       {r4, r12}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
   ; TODO(Yang Zhang): Investigate less load instructions for
   ; the x/dx stepping
   MACRO
@@ -943,9 +953,9 @@ ScaleARGBRowDownEvenBox_NEON PROC
   MEMACCESS  6
   vld1.32    {$dn[$n]}, [r6]
   MEND
-************************
+;************************
 
-************************
+;************************
 ScaleARGBCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_argb
@@ -977,9 +987,9 @@ ScaleARGBCols_NEON PROC
   pop        {r4 - r6}
   bx         lr
   ENDP
-************************
+;************************
 
-************************
+;************************
   ; TODO(Yang Zhang): Investigate less load instructions for
   ; the x/dx stepping
   MACRO
@@ -990,9 +1000,9 @@ ScaleARGBCols_NEON PROC
   MEMACCESS  6
   vld2.32    {$dn1[$n], $dn2[$n]}, [r6]
   MEND
-************************
+;************************
 
-************************
+;************************
 ScaleARGBFilterCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_argb
@@ -1054,7 +1064,7 @@ ScaleARGBFilterCols_NEON PROC
   ENDP
 
   END
-************************
+;************************
 
 
 
