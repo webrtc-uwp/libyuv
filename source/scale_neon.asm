@@ -45,156 +45,198 @@ kMult38_Div9  DCW 0xe38, 0xe38,	0xe38, 0xe38, 0xe38, 0xe38,	0xe38, 0xe38
 ; Read 32x1 throw away even pixels, and write 16x1
 ScaleRowDown2_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst
-  ;     r3 = int dst_width
-  vpush       {q0, q1}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride (ignored)
+  ;   r2 = uint8* dst
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),   %0 r0
+  ;   "+r"(dst),       %1 r2
+  ;   "+r"(dst_width)  %2 r3
+
+  vpush       {q0-q1}
+
 1
   ; load even pixels into q0, odd into q1
-  MEMACCESS  0
-  vld2.8     {q0, q1}, [r0]!
-  subs       r3, r3, #16                      ; 16 processed per loop
-  MEMACCESS  1
-  vst1.8     {q1}, [r2]!                      ; store odd pixels
-  bgt        %b1
+  vld2.8      {q0, q1}, [r0]!
+  subs        r3, r3, #16                     ; 16 processed per loop
+  vst1.8      {q1}, [r2]!                     ; store odd pixels
+  bgt         %b1
 
-  vpop       {q0, q1}
+  vpop        {q0-q1}
 
-  bx        lr
+  bx          lr
   ENDP
 
 ; Read 32x1 average down and write 16x1.
 ScaleRowDown2Linear_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst
-  ;     r3 = int dst_width
-  vpush          {q0, q1}
-1
-  MEMACCESS  0
-  vld1.8     {q0, q1}, [r0]!                  ; load pixels and post inc
-  subs       r3, r3, #16                      ; 16 processed per loop
-  vpaddl.u8  q0, q0                           ; add adjacent
-  vpaddl.u8  q1, q1
-  vrshrn.u16 d0, q0, #1                       ; downshift, round and pack
-  vrshrn.u16 d1, q1, #1
-  MEMACCESS  1
-  vst1.8     {q0}, [r2]!
-  bgt        %b1
-  vpop           {q0, q1}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride (ignored)
+  ;   r2 = uint8* dst
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst),          %1 r2
+  ;   "+r"(dst_width)     %2 r3
 
-  bx        lr
+  vpush       {q0-q1}
+  vpush       {d0-d1}
+1
+  vld1.8      {q0, q1}, [r0]!                 ; load pixels and post
+                                              ; inc
+  subs        r3, r3, #16                     ; processed per loop
+  vpaddl.u8   q0, q0                          ; add adjacent
+  vpaddl.u8   q1, q1
+  vrshrn.u16  d0, q0, #1                      ; downshift, round and
+                                              ; pack
+  vrshrn.u16  d1, q1, #1
+  vst1.8      {q0}, [r2]!
+  bgt         %b1
+
+  vpop        {d0-d1}
+  vpop        {q0-q1}
+
+  bx          lr
   ENDP
 
 ; Read 32x2 average down and write 16x1
 ScaleRowDown2Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst
-  ;     r3 = int dst_width
-  ; This file was created from a .asm file
-  vpush          {q0, q1, q2, q3}
-  add        r1, r0
-1
-  MEMACCESS  0
-  vld1.8     {q0, q1}, [r0]!                  ; load row 1 and post inc
-  MEMACCESS  1
-  vld1.8     {q2, q3}, [r1]!                  ; load row 2 and post inc
-  subs       r3, r3, #16                      ; 16 processed per loop
-  vpaddl.u8  q0, q0                           ; row 1 add adjacent
-  vpaddl.u8  q1, q1
-  vpadal.u8  q0, q2                           ; row 2 add adjacent + row1
-  vpadal.u8  q1, q3
-  vrshrn.u16 d0, q0, #2                       ; downshift, round and pack
-  vrshrn.u16 d1, q1, #2
-  MEMACCESS  2
-  vst1.8     {q0}, [r2]!
-  bgt        %b1
-  vpop           {q0, q1, q2, q3}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint8* dst
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(src_stride),   %1 r1
+  ;   "+r"(dst),          %2 r2
+  ;   "+r"(dst_width)     %3 r3
 
-  bx        lr
+  vpush       {q0-q3}
+  vpush       {d0-d1}
+
+  ; change the stride to row 2 pointer
+  add         r1, r0
+1
+  vld1.8      {q0, q1}, [r0]!                 ; load row 1 and post inc
+  vld1.8      {q2, q3}, [r1]!                 ; load row 2 and post inc
+  subs        r3, r3, #16                     ; 16 processed per loop
+  vpaddl.u8   q0, q0                          ; row 1 add adjacent
+  vpaddl.u8   q1, q1
+  vpadal.u8   q0, q2                          ; row 2 add adjacent +
+                                              ; row1
+  vpadal.u8   q1, q3
+  vrshrn.u16  d0, q0, #2                      ; downshift, round and
+                                              ; pack
+  vrshrn.u16  d1, q1, #2
+  vst1.8      {q0}, [r2]!
+  bgt         %b
+
+  vpop        {d0-d1}
+  vpop        {q0-q3}
+
+  bx          lr
   ENDP
 
 ScaleRowDown4_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush       {q0, q1}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride (ignored)
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width)     %2 r3
+
+  vpush       {q0-q1}
+  vpush       {d0-d3}
 
 1
-  MEMACCESS   0
-  vld4.8      {d0, d1, d2, d3}, [r0]!        ; src line 0
-  subs        r3, r3, #8                     ; 8 processed per loop
-  MEMACCESS   1
+  vld4.8      {d0, d1, d2, d3}, [r0]!         ; line 0
+  subs        r3, r3, #8                      ; 8 processed per loop
   vst1.8      {d2}, [r2]!
   bgt         %b1
 
-  vpop        {q0, q1}
+  vpop        {d0-d3}
+  vpop        {q0-q1}
+
   bx          lr
   ENDP
 
 ScaleRowDown4Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  push       {r4-r6}
-  vpush      {q0-q3}
-  add        r4, r0, r1 ; src_ptr + src_stride
-  add        r5, r4, r1 ; src_ptr + src_stride * 2
-  add        r6, r5, r1 ; src_ptr + src_stride * 3
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ; clobber
+  ;   r4 = const uint8* src_ptr1
+  ;   r5 = const uint8* src_ptr2
+  ;   r6 = const uint8* src_ptr3
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width),    %2 r3
+  ;   "+r"(src_ptr1),     %3 r4
+  ;   "+r"(src_ptr2),     %4 r5
+  ;   "+r"(src_ptr3)      %5 r6
 
-1
-  MEMACCESS  0
-  vld1.8     {q0}, [r0]!                       ; load up 16x4
-  MEMACCESS  4
-  vld1.8     {q1}, [r4]!
-  MEMACCESS  5
-  vld1.8     {q2}, [r5]!
-  MEMACCESS  6
-  vld1.8     {q3}, [r6]!
-  subs       r3, r3, #4
-  vpaddl.u8  q0, q0
-  vpadal.u8  q0, q1
-  vpadal.u8  q0, q2
-  vpadal.u8  q0, q3
-  vpaddl.u16 q0, q0
-  vrshrn.u32 d0, q0, #4                        ; divide by 16 w/rounding
-  vmovn.u16  d0, q0
-  MEMACCESS  2
-  vst1.32    {d0[0]}, [r2]!
-  bgt        %b1
+  vpush       {q0-q3}
+  push        {r4-r6}
 
-  vpop      {q0-q3}
-  pop       {r4-r6}
-  bx        lr
+  add         r4, r0, r1                        ; src_ptr + src_stride
+  add         r5, r4, r1                        ; src_ptr + src_stride * 2
+  add         r6, r5, r1                        ; src_ptr + src_stride * 3
+
+  vld1.8      {q0}, [r0]!                      ; load up 16x4
+  vld1.8      {q1}, [r4]!
+  vld1.8      {q2}, [r5]!
+  vld1.8      {q3}, [r6]!
+  subs        r3, r3, #4
+  vpaddl.u8   q0, q0
+  vpadal.u8   q0, q1
+  vpadal.u8   q0, q2
+  vpadal.u8   q0, q3
+  vpaddl.u16  q0, q0
+  vrshrn.u32  d0, q0, #4                       ; divide by 16 w/rounding
+  vmovn.u16   d0, q0
+  vst1.32     {d0[0]}, [r2]!
+  bgt         %b1
+
+  pop         {r4-r6}
+  vpop        {q0-q3}
+
+  bx          lr
   ENDP
 
+; Down scale from 4 to 3 pixels. Use the neon multilane read/write
+; to load up the every 4th pixel into a 4 different registers.
+; Point samples 32 pixels to 24 pixels.
 ScaleRowDown34_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush     {d0-d3}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride (ignored)
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width)     %2 r3
+
+  vpush       {d0-d3}
 
 1
-  MEMACCESS 0
-  vld4.8    {d0, d1, d2, d3}, [r0]!     ; src line 0
-  subs      r3, r3, #24
-  vmov      d2, d3                      ; order d0, d1, d2
-  MEMACCESS 1
-  vst3.8     {d0, d1, d2}, [r2]!
-  bgt        %b1
+  vld4.8      {d0, d1, d2, d3}, [r0]!         ; src line 0
+  subs        r3, r3, #24
+  vmov        d2, d3                          ; order d0, d1, d2
+  vst3.8      {d0, d1, d2}, [r2]!
+  bgt         %b1
 
-  vpop      {d0-d3}
-  bx        lr
+  vpop        {d0-d3}
+
+  bx          lr
   ENDP
 
 ScaleRowDown34_0_Box_NEON PROC
@@ -203,135 +245,156 @@ ScaleRowDown34_0_Box_NEON PROC
   ;     r1 = src_stride
   ;     r2 = uint8* dst_ptr
   ;     r3 = int dst_width
-  vpush     {q0-q3}
-  vpush     {q8-q11}
-  vpush     {d24}
+  ;
+  ;     "+r"(src_ptr),    %0 r0
+  ;     "+r"(dst_ptr),    %1 r2
+  ;     "+r"(dst_width),  %2 r3
+  ;     "+r"(src_stride)  %3 r1
 
-  vmov.u8    d24, #3
-  add        r1, r0
+  vpush       {q0-q3}
+  vpush       {q8-q11}
+  vpush       {d0-d7}
+  vpush       {d24}
+
+  vmov.u8     d24, #3
+  add         r1, r0
 1
-  MEMACCESS    0
-  vld4.8       {d0, d1, d2, d3}, [r0]!       ; src line 0
-  MEMACCESS    3
-  vld4.8       {d4, d5, d6, d7}, [r1]!       ; src line 1
-  subs         r3, r3, #24
+  vld4.8      {d0, d1, d2, d3}, [r0]!         ; src line 0
+  vld4.8      {d4, d5, d6, d7}, [r1]!         ; src line 1
+  subs        r3, r3, #24
 
   ; filter src line 0 with src line 1
   ; expand chars to shorts to allow for room
   ; when adding lines together
-  vmovl.u8     q8, d4
-  vmovl.u8     q9, d5
-  vmovl.u8     q10, d6
-  vmovl.u8     q11, d7
+  vmovl.u8    q8, d4
+  vmovl.u8    q9, d5
+  vmovl.u8    q10, d6
+  vmovl.u8    q11, d7
 
   ; 3 * line_0 + line_1
-  vmlal.u8     q8, d0, d24
-  vmlal.u8     q9, d1, d24
-  vmlal.u8     q10, d2, d24
-  vmlal.u8     q11, d3, d24
+  vmlal.u8    q8, d0, d24
+  vmlal.u8    q9, d1, d24
+  vmlal.u8    q10, d2, d24
+  vmlal.u8    q11, d3, d24
 
   ; (3 * line_0 + line_1) >> 2
-  vqrshrn.u16  d0, q8, #2
-  vqrshrn.u16  d1, q9, #2
-  vqrshrn.u16  d2, q10, #2
-  vqrshrn.u16  d3, q11, #2
+  vqrshrn.u16 d0, q8, #2
+  vqrshrn.u16 d1, q9, #2
+  vqrshrn.u16 d2, q10, #2
+  vqrshrn.u16 d3, q11, #2
 
   ; a0 = (src[0] * 3 + s[1] * 1) >> 2
-  vmovl.u8     q8, d1
-  vmlal.u8     q8, d0, d24
-  vqrshrn.u16  d0, q8, #2
+  vmovl.u8    q8, d1
+  vmlal.u8    q8, d0, d24
+  vqrshrn.u16 d0, q8, #2
 
   ; a1 = (src[1] * 1 + s[2] * 1) >> 1
-  vrhadd.u8    d1, d1, d2
+  vrhadd.u8   d1, d1, d2
 
   ; a2 = (src[2] * 1 + s[3] * 3) >> 2
-  vmovl.u8     q8, d2
-  vmlal.u8     q8, d3, d24
-  vqrshrn.u16  d2, q8, #2
+  vmovl.u8    q8, d2
+  vmlal.u8    q8, d3, d24
+  vqrshrn.u16 d2, q8, #2
 
-  MEMACCESS    1
-  vst3.8       {d0, d1, d2}, [r2]!
+  vst3.8      {d0, d1, d2}, [r2]!
 
-  bgt          %b1
+  bgt         %b1
 
+  vpop        {d24}
+  vpop        {d0-d7}
+  vpop        {q8-q11}
+  vpop        {q0-q3}
 
-  vpop      {d24}
-  vpop      {q8-q11}
-  vpop      {q0-q3}
-  bx        lr
+  bx          lr
   ENDP
 
 ScaleRowDown34_1_Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush      {q0-q3}
-  vpush      {d24}
-  vmov.u8    d24, #3
-  add        r1, r0
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width),    %2 r3
+  ;   "+r"(src_stride)    %3 r1
+
+  vpush       {q0-q3}
+  vpush       {d24}
+  push        {r4}
+
+  vmov.u8     d24, #3
+  add         r1, r0
 1
-  MEMACCESS    0
-  vld4.8       {d0, d1, d2, d3}, [r0]!       ; src line 0
-  MEMACCESS    3
-  vld4.8       {d4, d5, d6, d7}, [r1]!       ; src line 1
-  subs         r3, r3, #24
+  vld4.8      {d0, d1, d2, d3}, [r0]!         ; src line 0
+  vld4.8      {d4, d5, d6, d7}, [r1]!         ; src line 1
+  subs        r3, r3, #24
   ; average src line 0 with src line 1
-  vrhadd.u8    q0, q0, q2
-  vrhadd.u8    q1, q1, q3
+  vrhadd.u8   q0, q0, q2
+  vrhadd.u8   q1, q1, q3
 
   ; a0 = (src[0] * 3 + s[1] * 1) >> 2
-  vmovl.u8     q3, d1
-  vmlal.u8     q3, d0, d24
-  vqrshrn.u16  d0, q3, #2
+  vmovl.u8    q3, d1
+  vmlal.u8    q3, d0, d24
+  vqrshrn.u16 d0, q3, #2
 
   ; a1 = (src[1] * 1 + s[2] * 1) >> 1
-  vrhadd.u8    d1, d1, d2
+  vrhadd.u8   d1, d1, d2
 
   ; a2 = (src[2] * 1 + s[3] * 3) >> 2
-  vmovl.u8     q3, d2
-  vmlal.u8     q3, d3, d24
-  vqrshrn.u16  d2, q3, #2
+  vmovl.u8    q3, d2
+  vmlal.u8    q3, d3, d24
+  vqrshrn.u16 d2, q3, #2
 
-  MEMACCESS    1
-  vst3.8       {d0, d1, d2}, [r2]!
-  bgt          %b1
+  vst3.8      {d0, d1, d2}, [r2]!
+  bgt         %b1
 
-  vpop      {d24}
-  vpop      {q0-q3}
-  bx        lr
+  pop         {r4}
+  vpop        {d24}
+  vpop        {q0-q3}
+
+  bx          lr
   ENDP
 
+; 32 -> 12
 ScaleRowDown38_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush     {d0-d5}
-  push      {r4}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride (ignored)
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width)     %2 r3
+  ;   "r"(&kShuf38)       %3 r4
 
-  adr       R4, kShuf38
+  vpush       {d0-d5}
+  push        {r4}
 
-  vld1.8     {q3}, [r4]
+  adr         R4, kShuf38
+
+  vld1.8      {q3}, [r4]
 1
-  MEMACCESS  0
-  vld1.8     {d0, d1, d2, d3}, [r0]!
-  subs       r3, r3, #12
-  vtbl.u8    d4, {d0, d1, d2, d3}, d6
-  vtbl.u8    d5, {d0, d1, d2, d3}, d7
-  MEMACCESS  2
-  vst1.8     {d4}, [r2]!
-  MEMACCESS  2
-  vst1.32    {d5[0]}, [r2]!
-  bgt        %b1
+  vld1.8      {d0, d1, d2, d3}, [r0]!
+  subs        r3, r3, #12
+  vtbl.u8     d4, {d0, d1, d2, d3}, d6
+  vtbl.u8     d5, {d0, d1, d2, d3}, d7
+  vst1.8      {d4}, [r2]!
+  vst1.32     {d5[0]}, [r2]!
+  bgt         %b1
 
-  vpop      {d0-d5}
-  pop       {r4}
-  bx        lr
+  pop         {r4}
+  vpop        {d0-d5}
+
+  bx          lr
   ENDP
 
+
+
+
+************************
 ScaleRowDown38_3_Box_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -454,7 +517,9 @@ ScaleRowDown38_3_Box_NEON PROC
   vpop      {q0-q3}
   bx        lr
   ENDP
+************************
 
+************************
 ScaleRowDown38_2_Box_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -557,7 +622,9 @@ ScaleRowDown38_2_Box_NEON PROC
   vpop      {q0-q3}
   bx        lr
   ENDP
+************************
 
+************************
 ScaleAddRows_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -592,7 +659,9 @@ ScaleAddRows_NEON PROC
   pop       {r4, r5, r12}
   bx        lr
   ENDP
+************************
 
+************************
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
   MACRO
@@ -603,6 +672,7 @@ ScaleAddRows_NEON PROC
   MEMACCESS  6
   vld2.8     {d6[$n], d7[$n]}, [r6]
   MEND
+************************
 
 dx_offset DCD  0, 1, 2, 3
 
@@ -610,6 +680,7 @@ dx_offset DCD  0, 1, 2, 3
 ; #define BLENDER(a, b, f) (uint8)((int)(a) +
 ;    ((int)(f) * ((int)(b) - (int)(a)) >> 16))
 
+************************
 ScaleFilterCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_ptr
@@ -673,7 +744,9 @@ ScaleFilterCols_NEON PROC
   pop        {r4-r6}
   bx         lr
   ENDP
+************************
 
+************************
 ScaleARGBRowDown2_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -696,9 +769,11 @@ ScaleARGBRowDown2_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
+************************
 
 
 
+************************
 ScaleARGBRowDown2Linear_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -728,7 +803,9 @@ ScaleARGBRowDown2Linear_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
+************************
 
+************************
 ScaleARGBRowDown2Box_NEON PROC
   ; input
   ;     r0 = uint8* src_ptr
@@ -770,7 +847,9 @@ ScaleARGBRowDown2Box_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
+************************
 
+************************
 ScaleARGBRowDownEven_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -800,7 +879,9 @@ ScaleARGBRowDownEven_NEON PROC
   pop       {r4, r12}
   bx         lr
   ENDP
+************************
 
+************************
 ScaleARGBRowDownEvenBox_NEON PROC
   ; input
   ;     r0 = uint8* src_argb
@@ -849,7 +930,9 @@ ScaleARGBRowDownEvenBox_NEON PROC
   pop       {r4, r12}
   bx         lr
   ENDP
+************************
 
+************************
   ; TODO(Yang Zhang): Investigate less load instructions for
   ; the x/dx stepping
   MACRO
@@ -860,7 +943,9 @@ ScaleARGBRowDownEvenBox_NEON PROC
   MEMACCESS  6
   vld1.32    {$dn[$n]}, [r6]
   MEND
+************************
 
+************************
 ScaleARGBCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_argb
@@ -892,7 +977,9 @@ ScaleARGBCols_NEON PROC
   pop        {r4 - r6}
   bx         lr
   ENDP
+************************
 
+************************
   ; TODO(Yang Zhang): Investigate less load instructions for
   ; the x/dx stepping
   MACRO
@@ -903,7 +990,9 @@ ScaleARGBCols_NEON PROC
   MEMACCESS  6
   vld2.32    {$dn1[$n], $dn2[$n]}, [r6]
   MEND
+************************
 
+************************
 ScaleARGBFilterCols_NEON PROC
   ; input
   ;     r0 = uint8* dst_argb
@@ -965,6 +1054,7 @@ ScaleARGBFilterCols_NEON PROC
   ENDP
 
   END
+************************
 
 
 

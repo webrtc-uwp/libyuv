@@ -15,14 +15,21 @@
   EXPORT HammingDistance_NEON
   EXPORT SumSquareError_NEON
 
+; 256 bits at a time
+; uses short accumulator which restricts count to 131 KB
 HammingDistance_NEON PROC
   ; input
-  ;   r0 = src_a
-  ;   r1 = src_b
-  ;   r2 = count
+  ;   r0 = const uint8* src_a
+  ;   r1 = const uint8* src_b
+  ;   r2 = int count
   ; output
   ;   r0 = uint32
-  push        {r3}
+  ;
+  ;   "+r"(src_a),        %0 r0
+  ;   "+r"(src_b),        %1 r1
+  ;   "+r"(count),        %2 r2
+  ;   "=r"(diff)          %3 r0
+
   vpush       {q0-q4}
   vpush       {d0-d1}
 
@@ -31,40 +38,49 @@ HammingDistance_NEON PROC
 1
   vld1.8      {q0, q1}, [r0]!
   vld1.8      {q2, q3}, [r1]!
-  veor.32    q0, q0, q2
-  veor.32    q1, q1, q3
-  vcnt.i8    q0, q0
-  vcnt.i8    q1, q1
-  subs       r2, r2, #32
-  vadd.u8    q0, q0, q1                     ; 16 byte counts
-  vpadal.u8  q4, q0                         ; 8 shorts
-  bgt        %b1
+  veor.32     q0, q0, q2
+  veor.32     q1, q1, q3
+  vcnt.i8     q0, q0
+  vcnt.i8     q1, q1
+  subs        r2, r2, #32
+  vadd.u8     q0, q0, q1                     ; 16 byte counts
+  vpadal.u8   q4, q0                         ; 8 shorts
+  bgt         %b1
 
-  vpaddl.u16 q0, q4                         ; 4 ints
-  vpadd.u32  d0, d0, d1
-  vpadd.u32  d0, d0, d0
-  vmov.32    r3, d0[0]
+  vpaddl.u16  q0, q4                         ; 4 ints
+  vpadd.u32   d0, d0, d1
+  vpadd.u32   d0, d0, d0
+  vmov.32     r0, d0[0]
 
-  pop         {r3}
   vpop        {d0-d1}
   vpop        {q0-q4}
 
+  bx        lr
   ENDP
+
 
 SumSquareError_NEON PROC
   ; input
-  ;		r0 = uint8* src_a
-  ;		r1 = uint8* src_b
-  ;		r3 = int count
+  ;   r0 = const uint8* src_a
+  ;   r1 = const uint8* src_b
+  ;   r2 = int count
   ; output
-  ;	  r0 = uint32
-  vpush			 {q0, q1, q2, q3}
-  vpush			 {q8, q9, q10, q11}
+  ;   r0 = sse
+  ;
+  ;   "+r"(src_a),        %0 r0
+  ;   "+r"(src_b),        %1 r1
+  ;   "+r"(count),        %2 r2
+  ;   "=r"(sse)           %3 r0
+
+  vpush {q0-q3}
+  vpush {q8-q11}
+  vpush {d0-d7}
 
   vmov.u8    q8, #0
   vmov.u8    q10, #0
   vmov.u8    q9, #0
   vmov.u8    q11, #0
+
 1
   vld1.8     {q0}, [r0]!
   vld1.8     {q1}, [r1]!
@@ -75,7 +91,7 @@ SumSquareError_NEON PROC
   vmlal.s16  q9, d6, d6
   vmlal.s16  q10, d5, d5
   vmlal.s16  q11, d7, d7
-  bgt				 %b1
+  bgt        %b1
 
   vadd.u32   q8, q8, q9
   vadd.u32   q10, q10, q11
@@ -83,9 +99,12 @@ SumSquareError_NEON PROC
   vpaddl.u32 q1, q11
   vadd.u64   d0, d2, d3
   vmov.32    r0, d0[0]
-  vpop			 {q8, q9, q10, q11}
-  vpop			 {q0, q1, q2, q3}
-  bx				 lr
+
+  vpop      {d0-d7}
+  vpop      {q8-q11}
+  vpop      {q0-q3}
+
+  bx        lr
   ENDP
 
   END
