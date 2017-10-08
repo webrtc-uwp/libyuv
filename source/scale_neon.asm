@@ -523,38 +523,40 @@ ScaleRowDown38_3_Box_NEON PROC
   bx          lr
   ENDP
 
-
-
-
-
-
-
-;************************
+; 32x2 -> 12x1
 ScaleRowDown38_2_Box_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint8* dst_ptr
-  ;     r3 = int dst_width
-  vpush     {q0-q3}
-  vpush     {q13-q14}
-  push      {r4, r5}
-  adr       r4, kMult38_Div6
-  adr       r5, kShuf38_2
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint8* dst_ptr
+  ;   r3 = int dst_width
+  ;
+  ;   "+r"(src_ptr),      %0 r0
+  ;   "+r"(dst_ptr),      %1 r2
+  ;   "+r"(dst_width),    %2 r3
+  ;   "+r"(src_stride)    %3 r1
+  ;   "r"(&kMult38_Div6), %4 r4
+  ;   "r"(&kShuf38_2)     %5 r5
 
-  MEMACCESS    4
-  vld1.16      {q13}, [r4]
-  MEMACCESS    5
-  vld1.8       {q14}, [r5]
-  add          r1, r0
+  vpush       {q0-q3}
+  vpush       {q13-q14}
+  vpush       {d0-d7}
+  vpush       {d28-d29}
+  push        {r4-r5}
+
+  adr         r4, kMult38_Div6
+  adr         r5, kShuf38_2
+
+  vld1.16    {q13}, [r4]
+  vld1.8     {q14}, [r5]
+  add        r1, r0
+
 1
   ; d0 = 00 40 01 41 02 42 03 43
   ; d1 = 10 50 11 51 12 52 13 53
   ; d2 = 20 60 21 61 22 62 23 63
   ; d3 = 30 70 31 71 32 72 33 73
-  MEMACCESS    0
   vld4.8       {d0, d1, d2, d3}, [r0]!
-  MEMACCESS    3
   vld4.8       {d4, d5, d6, d7}, [r1]!
   subs         r3, r3, #12
 
@@ -621,30 +623,38 @@ ScaleRowDown38_2_Box_NEON PROC
   vtbl.u8      d3, {d0, d1, d2}, d28
   vtbl.u8      d4, {d0, d1, d2}, d29
 
-  MEMACCESS    1
   vst1.8       {d3}, [r2]!
-  MEMACCESS    1
   vst1.32      {d4[0]}, [r2]!
   bgt          %b1
 
-  pop       {r4, r5}
-  vpop      {q13-q14}
-  vpop      {q0-q3}
-  bx        lr
-  ENDP
-;************************
+  pop         {r4-r5}
+  vpop        {d28-d29}
+  vpop        {d0-d7}
+  vpop        {q13-q14}
+  vpop        {q0-q3}
 
-;************************
+  bx          lr
+  ENDP
+
 ScaleAddRows_NEON PROC
   ; input
-  ;     r0 = uint8* src_ptr
-  ;     r1 = src_stride
-  ;     r2 = uint16* dst_ptr
-  ;     r3 = int dst_width
-  push      {r4, r5,  r12}
-  ldr       r4, [SP, #12]    ; int src_height
-  mov       r5, 0
-  vpush     {q0-q3}
+  ;   r0 = uint8* src_ptr
+  ;   r1 = src_stride
+  ;   r2 = uint16* dst_ptr
+  ;   r3 = int src_width
+  ;   r4 = int src_height
+  ;
+  ;   "=&r"(src_tmp),     %0 r5
+  ;   "+r"(src_ptr),      %1 r0
+  ;   "+r"(dst_ptr),      %2 r2
+  ;   "+r"(src_stride),   %3 r1
+  ;   "+r"(src_width),    %4 r3
+  ;   "+r"(src_height)    %5 r4
+
+  vpush       {q0-q3}
+  push        {r4, r5, r12}
+
+  ldr         r4, [SP, #12]                   ; int src_height
 
 1
   mov       r5, r0
@@ -653,59 +663,63 @@ ScaleAddRows_NEON PROC
   veor      q3, q3, q3
 2
   ; load 16 pixels into q0
-  MEMACCESS   0
   vld1.8     {q0}, [r5], r1
   vaddw.u8   q3, q3, d1
   vaddw.u8   q2, q2, d0
   subs       r12, r12, #1
   bgt        %b2
-  MEMACCESS  2
   vst1.16    {q2, q3}, [r2]!                  ; store pixels
   add        r0, r0, #16
   subs       r3, r3, #16                      ; 16 processed per loop
   bgt        %b1
 
-  vpop      {q0-q3}
-  pop       {r4, r5, r12}
-  bx        lr
-  ENDP
-;************************
+  pop         {r4, r5, r12}
+  vpop        {q0-q3}
 
-;************************
+  bx          lr
+  ENDP
+
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
-  MACRO
+MACRO
   LOAD2_DATA8_LANE  $n
   lsr        r5, r3, #16
   add        r6, r1, r5
   add        r3, r3, r4
-  MEMACCESS  6
   vld2.8     {d6[$n], d7[$n]}, [r6]
   MEND
-;************************
+
 
 dx_offset DCD  0, 1, 2, 3
 
-; The NEON version mimics this formula:
+; The NEON version mimics this formula (from row_common.cc):
 ; #define BLENDER(a, b, f) (uint8)((int)(a) +
-;    ((int)(f) * ((int)(b) - (int)(a)) >> 16))
-
-;************************
+;    ((((int)((f)) * ((int)(b) - (int)(a))) + 0x8000) >> 16))
 ScaleFilterCols_NEON PROC
   ; input
-  ;     r0 = uint8* dst_ptr
-  ;     r1 = uint8* src_ptr
-  ;     r2 = int dst_width
-  ;     r3 = int x
+  ;   r0 = uint8* dst_ptr
+  ;   r1 = uint8* src_ptr
+  ;   r2 = int dst_width
+  ;   r3 = int x
+  ;   r4 = int dx
+  ;
+  ;   "+r"(dst_ptr),      %0 r0
+  ;   "+r"(src_ptr),      %1 r1
+  ;   "+r"(dst_width),    %2 r2
+  ;   "+r"(x),            %3 r3
+  ;   "+r"(dx),           %4 r4
+  ;   "+r"(tmp),          %5 r5
+  ;   "+r"(src_tmp)       %6 r6
 
-  push       {r4-r6}
+  push        {r5-r6}
+  vpush       {q0-q3}
+  vpush       {q8-q13}
+  vpush       {d6-d7}
+  vpush       {d18-d21}
 
-  ldr        r4, [sp, #12]   ; int dx
-  adr        r5,  dx_offset
-  mov        r6,  r1
-
-  vpush      {q0-q3}
-  vpush      {q8-q13}
+  ldr        r4, [sp, #12]                    ; int dx
+  adr        r5,  dx_offset                   ; aka tmp
+  mov        r6,  r1                          ; src_tmp = src_ptr
 
   vdup.32    q0, r3                           ; x
   vdup.32    q1, r4                           ; dx
@@ -717,15 +731,16 @@ ScaleFilterCols_NEON PROC
   ; x + 4 * dx, x + 5 * dx, x + 6 * dx, x + 7 * dx
   vadd.s32   q2, q1, q3
   vshl.i32   q0, q3, #1                       ; 8 * dx
+
 1
-  LOAD2_DATA8_LANE  0
-  LOAD2_DATA8_LANE  1
-  LOAD2_DATA8_LANE  2
-  LOAD2_DATA8_LANE  3
-  LOAD2_DATA8_LANE  4
-  LOAD2_DATA8_LANE  5
-  LOAD2_DATA8_LANE  6
-  LOAD2_DATA8_LANE  7
+  LOAD2_DATA8_LANE 0
+  LOAD2_DATA8_LANE 1
+  LOAD2_DATA8_LANE 2
+  LOAD2_DATA8_LANE 3
+  LOAD2_DATA8_LANE 4
+  LOAD2_DATA8_LANE 5
+  LOAD2_DATA8_LANE 6
+  LOAD2_DATA8_LANE 7
   vmov       q10, q1
   vmov       q11, q2
   vuzp.16    q10, q11
@@ -742,19 +757,21 @@ ScaleFilterCols_NEON PROC
   vadd.s16   q8, q8, q9
   vmovn.s16  d6, q8
 
-  MEMACCESS  0
   vst1.8     {d6}, [r0]!                      ; store pixels
   vadd.s32   q1, q1, q0
   vadd.s32   q2, q2, q0
   subs       r2, r2, #8                       ; 8 processed per loop
   bgt        %b1
 
-  vpop       {q8-q13}
-  vpop       {q0-q3}
-  pop        {r4-r6}
-  bx         lr
+  vpop        {d18-d21}
+  vpop        {d6-d7}
+  vpop        {q8-q13}
+  vpop        {q0-q3}
+  pop         {r5-r6}
+
+  bx          lr
   ENDP
-;************************
+
 
 ;************************
 ScaleARGBRowDown2_NEON PROC
