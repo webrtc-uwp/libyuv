@@ -134,240 +134,202 @@ kYToRgb     DCD   0x0101 * YG, 0, 0, 0
 
 ; ------- MACROS ------------------------
 
-  MACRO
-  YUV422TORGB_SETUP_REG
-    adr        r5, kUVToRB
-    vld1.8     {d24}, [r5]
-    adr        r5, kUVToG
-    vld1.8     {d25}, [r5]
-    adr        r5, kUVBiasBGR
-    vld1.16    {d26[], d27[]}, [r5]!
-    vld1.16    {d8[], d9[]}, [r5]!
-    vld1.16    {d28[], d29[]}, [r5]
-    adr        r5, kYToRgb
-    vld1.32    {d30[], d31[]}, [r5]
+; Read 8 Y, 4 U and 4 V from 422
+MACRO READYUV422
+  vld1.8     {d0}, [r0]!
+  vld1.32    {d2[0]}, [r1]!
+  vld1.32    {d2[1]}, [r2]!
   MEND
 
-  ; Read 8 Y, 4 U and 4 V from 422
-  MACRO
-  READYUV422
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    MEMACCESS	1
-    vld1.32    {d2[0]}, [r1]!
-    MEMACCESS 2
-    vld1.32    {d2[1]}, [r2]!
+; Read 8 Y, 8 U and 8 V from 444
+MACRO READYUV444
+  vld1.8     {d0}, [r0]!
+  vld1.8     {d2}, [r1]!
+  vld1.8     {d3}, [r2]!
+  vpaddl.u8  q1, q1
+  vrshrn.u16 d2, q1, #1
   MEND
 
-  ; Read 8 Y, 2 U and 2 V from 422
-  MACRO
-  READYUV411
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    MEMACCESS	1
-    vld1.16    {d2[0]}, [r1]!
-    MEMACCESS 2
-    vld1.16    {d2[1]}, [r2]!
-    vmov.u8    d3, d2
-    vzip.u8    d2, d3
+; Read 8 Y, and set 4 U and 4 V to 128
+MACRO READYUV400
+  MEMACCESS 0
+  vld1.8     {d0}, [r0]!
+  vmov.u8    d2, #128
   MEND
 
-  ; Read 8 Y, 8 U and 8 V from 444
-  MACRO
-  READYUV444
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    MEMACCESS	1
-    vld1.8     {d2}, [r1]!
-    MEMACCESS 2
-    vld1.8     {d3}, [r2]!
-    vpaddl.u8  q1, q1
-    vrshrn.u16 d2, q1, #1
+; Read 8 Y and 4 UV from NV12
+MACRO READNV12
+  vld1.8     {d0}, [r0]!
+  vld1.8     {d2}, [r1]!
+  vmov.u8    d3, d2                         ; split odd/even uv apart
+  vuzp.u8    d2, d3
+  vtrn.u32   d2, d3
   MEND
 
-  ; Read 8 Y and 4 VU from NV21
-  MACRO
-  READNV21
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    MEMACCESS	1
-    vld1.8     {d2}, [r1]!
-    vmov.u8    d3, d2                         ; split odd/even uv apart
-    vuzp.u8    d3, d2
-    vtrn.u32   d2, d3
+; Read 8 Y and 4 VU from NV21
+MACRO READNV21
+  vld1.8     {d0}, [r0]!
+  vld1.8     {d2}, [r1]!
+  vmov.u8    d3, d2                         ; split odd/even uv apart
+  vuzp.u8    d3, d2
+  vtrn.u32   d2, d3
   MEND
 
-  ; Read 8 Y, and set 4 U and 4 V to 128
-  MACRO
-  READYUV400
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    vmov.u8    d2, #128
+; Read 8 YUY2
+MACRO READYUY2
+  vld2.8     {d0, d2}, [r0]!
+  vmov.u8    d3, d2
+  vuzp.u8    d2, d3
+  vtrn.u32   d2, d3
   MEND
 
-  ; Read 8 Y and 4 UV from NV12
-  MACRO
-  READNV12
-    MEMACCESS	0
-    vld1.8     {d0}, [r0]!
-    MEMACCESS	1
-    vld1.8     {d2}, [r1]!
-    vmov.u8    d3, d2                         ; split odd/even uv apart
-    vuzp.u8    d2, d3
-    vtrn.u32   d2, d3
+; Read 8 UYVY
+MACRO READUYVY
+  vld2.8     {d2, d3}, [r0]!
+  vmov.u8    d0, d3
+  vmov.u8    d3, d2
+  vuzp.u8    d2, d3
+  vtrn.u32   d2, d3
   MEND
 
-  ; Read 8 YUY2
-  MACRO
-  READYUY2
-    MEMACCESS	0
-    vld2.8     {d0, d2}, [r0]!
-    vmov.u8    d3, d2
-    vuzp.u8    d2, d3
-    vtrn.u32   d2, d3
+MACRO YUVTORGB_SETUP
+  push       {r0}
+  adr        r0, kUVToRB
+  vld1.8     {d24}, [r0]
+  adr        r0, kUVToG
+  vld1.8     {d25}, [r0]
+  adr        r0, kUVBiasBGR
+  vld1.16    {d26[], d27[]}, [r0]!
+  vld1.16    {d8[], d9[]}, [r0]!
+  vld1.16    {d28[], d29[]}, [r0]
+  adr        r0, kYToRgb
+  vld1.32    {d30[], d31[]}, [r0]
+  pop        {r0}
   MEND
 
-  ; Read 8 UYVY
-  MACRO
-  READUYVY
-    MEMACCESS	0
-    vld2.8     {d2, d3}, [r0]!
-    vmov.u8    d0, d3
-    vmov.u8    d3, d2
-    vuzp.u8    d2, d3
-    vtrn.u32   d2, d3
+MACRO YUVTORGB
+  vmull.u8   q8, d2, d24                     ; u/v B/R component
+  vmull.u8   q9, d2, d25                     ; u/v G component
+  vmovl.u8   q0, d0                          ; Y
+  vmovl.s16  q10, d1
+  vmovl.s16  q0, d0
+  vmul.s32   q10, q10, q15
+  vmul.s32   q0, q0, q15
+  vqshrun.s32 d0, q0, #16
+  vqshrun.s32 d1, q10, #16                   ; Y
+  vadd.s16   d18, d19
+  vshll.u16  q1, d16, #16                    ; Replicate u * UB
+  vshll.u16  q10, d17, #16                   ; Replicate v * VR
+  vshll.u16  q3, d18, #16                    ; Replicate (v*VG + u*UG)
+  vaddw.u16  q1, q1, d16
+  vaddw.u16  q10, q10, d17
+  vaddw.u16  q3, q3, d18
+  vqadd.s16  q8, q0, q13                     ; B
+  vqadd.s16  q9, q0, q14                     ; R
+  vqadd.s16  q0, q0, q4                      ; G
+  vqadd.s16  q8, q8, q1                      ; B
+  vqadd.s16  q9, q9, q10                     ; R
+  vqsub.s16  q0, q0, q3                      ; G
+  vqshrun.s16 d20, q8, #6                    ; B
+  vqshrun.s16 d22, q9, #6                    ; R
+  vqshrun.s16 d21, q0, #6                    ; G
   MEND
 
-  MACRO
-  ARGBTOARGB4444
-    vshr.u8    d20, d20, #4                     ; B
-    vbic.32    d21, d21, d4                     ; G
-    vshr.u8    d22, d22, #4                     ; R
-    vbic.32    d23, d23, d4                     ; A
-    vorr       d0, d20, d21                     ; BG
-    vorr       d1, d22, d23                     ; RA
-    vzip.u8    d0, d1                           ; BGRA
+MACRO ARGBTORGB565
+  vshll.u8    q0, d22, #8                     ; R
+  vshll.u8    q8, d21, #8                     ; G
+  vshll.u8    q9, d20, #8                     ; B
+  vsri.16     q0, q8, #5                      ; RG
+  vsri.16     q0, q9, #11                     ; RGB
   MEND
 
-  MACRO
-  ARGBTOARGB1555
-    vshll.u8    q0, d23, #8                     ; A
-    vshll.u8    q8, d22, #8                     ; R
-    vshll.u8    q9, d21, #8                     ; G
-    vshll.u8    q10, d20, #8                    ; B
-    vsri.16     q0, q8, #1                      ; AR
-    vsri.16     q0, q9, #6                      ; ARG
-    vsri.16     q0, q10, #11                    ; ARGB
+MACRO ARGBTOARGB1555
+  vshll.u8    q0, d23, #8                     ; A
+  vshll.u8    q8, d22, #8                     ; R
+  vshll.u8    q9, d21, #8                     ; G
+  vshll.u8    q10, d20, #8                    ; B
+  vsri.16     q0, q8, #1                      ; AR
+  vsri.16     q0, q9, #6                      ; ARG
+  vsri.16     q0, q10, #11                    ; ARGB
   MEND
 
-  MACRO
-  ARGBTORGB565
-    vshll.u8    q0, d22, #8                     ; R
-    vshll.u8    q8, d21, #8                     ; G
-    vshll.u8    q9, d20, #8                     ; B
-    vsri.16     q0, q8, #5                      ; RG
-    vsri.16     q0, q9, #11                     ; RGB
+
+MACRO ARGBTOARGB4444
+  vshr.u8    d20, d20, #4                     ; B
+  vbic.32    d21, d21, d4                     ; G
+  vshr.u8    d22, d22, #4                     ; R
+  vbic.32    d23, d23, d4                     ; A
+  vorr       d0, d20, d21                     ; BG
+  vorr       d1, d22, d23                     ; RA
+  vzip.u8    d0, d1                           ; BGRA
   MEND
 
-  MACRO
-  YUV422TORGB
-    vmull.u8   q8, d2, d24                     ; u/v B/R component
-    vmull.u8   q9, d2, d25                     ; u/v G component
-    vmovl.u8   q0, d0                          ; Y
-    vmovl.s16  q10, d1
-    vmovl.s16  q0, d0
-    vmul.s32   q10, q10, q15
-    vmul.s32   q0, q0, q15
-    vqshrun.s32 d0, q0, #16
-    vqshrun.s32 d1, q10, #16                   ; Y
-    vadd.s16   d18, d19
-    vshll.u16  q1, d16, #16                    ; Replicate u * UB
-    vshll.u16  q10, d17, #16                   ; Replicate v * VR
-    vshll.u16  q3, d18, #16                    ; Replicate (v*VG + u*UG)
-    vaddw.u16  q1, q1, d16
-    vaddw.u16  q10, q10, d17
-    vaddw.u16  q3, q3, d18
-    vqadd.s16  q8, q0, q13                     ; B */
-    vqadd.s16  q9, q0, q14                     ; R */
-    vqadd.s16  q0, q0, q4                      ; G */
-    vqadd.s16  q8, q8, q1                      ; B */
-    vqadd.s16  q9, q9, q10                     ; R */
-    vqsub.s16  q0, q0, q3                      ; G */
-    vqshrun.s16 d20, q8, #6                    ; B */
-    vqshrun.s16 d22, q9, #6                    ; R */
-    vqshrun.s16 d21, q0, #6                    ; G */
+
+MACRO RGB565TOARGB
+  vshrn.u16  d6, q0, #5                       ; G xxGGGGGG
+  vuzp.u8    d0, d1                           ; d0 xxxBBBBB RRRRRxxx
+  vshl.u8    d6, d6, #2                       ; G GGGGGG00 upper 6
+  vshr.u8    d1, d1, #3                       ; R 000RRRRR lower 5
+  vshl.u8    q0, q0, #3                       ; B,R BBBBB000 upper 5
+  vshr.u8    q2, q0, #5                       ; B,R 00000BBB lower 3
+  vorr.u8    d0, d0, d4                       ; B
+  vshr.u8    d4, d6, #6                       ; G 000000GG lower 2
+  vorr.u8    d2, d1, d5                       ; R
+  vorr.u8    d1, d4, d6                       ; G
   MEND
 
-  MACRO
-  RGB565TOARGB
-    vshrn.u16  d6, q0, #5                       ; G xxGGGGGG
-    vuzp.u8    d0, d1                           ; d0 xxxBBBBB RRRRRxxx
-    vshl.u8    d6, d6, #2                       ; G GGGGGG00 upper 6
-    vshr.u8    d1, d1, #3                       ; R 000RRRRR lower 5
-    vshl.u8    q0, q0, #3                       ; B,R BBBBB000 upper 5
-    vshr.u8    q2, q0, #5                       ; B,R 00000BBB lower 3
-    vorr.u8    d0, d0, d4                       ; B
-    vshr.u8    d4, d6, #6                       ; G 000000GG lower 2
-    vorr.u8    d2, d1, d5                       ; R
-    vorr.u8    d1, d4, d6                       ; G
+MACRO ARGB1555TOARGB
+  vshrn.u16  d7, q0, #8                       ; A Arrrrrxx
+  vshr.u8    d6, d7, #2                       ; R xxxRRRRR
+  vshrn.u16  d5, q0, #5                       ; G xxxGGGGG
+  vmovn.u16  d4, q0                           ; B xxxBBBBB
+  vshr.u8    d7, d7, #7                       ; A 0000000A
+  vneg.s8    d7, d7                           ; A AAAAAAAA upper 8
+  vshl.u8    d6, d6, #3                       ; R RRRRR000 upper 5
+  vshr.u8    q1, q3, #5                       ; R,A 00000RRR lower 3
+  vshl.u8    q0, q2, #3                       ; B,G BBBBB000 upper 5
+  vshr.u8    q2, q0, #5                       ; B,G 00000BBB lower 3
+  vorr.u8    q1, q1, q3                       ; R,A
+  vorr.u8    q0, q0, q2                       ; B,G
   MEND
 
-  MACRO
-  ARGB1555TOARGB
-    vshrn.u16  d7, q0, #8                       ; A Arrrrrxx
-    vshr.u8    d6, d7, #2                       ; R xxxRRRRR
-    vshrn.u16  d5, q0, #5                       ; G xxxGGGGG
-    vmovn.u16  d4, q0                           ; B xxxBBBBB
-    vshr.u8    d7, d7, #7                       ; A 0000000A
-    vneg.s8    d7, d7                           ; A AAAAAAAA upper 8
-    vshl.u8    d6, d6, #3                       ; R RRRRR000 upper 5
-    vshr.u8    q1, q3, #5                       ; R,A 00000RRR lower 3
-    vshl.u8    q0, q2, #3                       ; B,G BBBBB000 upper 5
-    vshr.u8    q2, q0, #5                       ; B,G 00000BBB lower 3
-    vorr.u8    q1, q1, q3                       ; R,A
-    vorr.u8    q0, q0, q2                       ; B,G
+; RGB555TOARGB is same as ARGB1555TOARGB but ignores alpha.
+MACRO RGB555TOARGB
+  vshrn.u16  d6, q0, #5                       ; G xxxGGGGG
+  vuzp.u8    d0, d1                           ; d0 xxxBBBBB xRRRRRxx
+  vshl.u8    d6, d6, #3                       ; G GGGGG000 upper 5
+  vshr.u8    d1, d1, #2                       ; R 00xRRRRR lower 5
+  vshl.u8    q0, q0, #3                       ; B,R BBBBB000 upper 5
+  vshr.u8    q2, q0, #5                       ; B,R 00000BBB lower 3
+  vorr.u8    d0, d0, d4                       ; B
+  vshr.u8    d4, d6, #5                       ; G 00000GGG lower 3
+  vorr.u8    d2, d1, d5                       ; R
+  vorr.u8    d1, d4, d6                       ; G
   MEND
 
-  MACRO
-  ARGB4444TOARGB
-    vuzp.u8    d0, d1                           ; d0 BG, d1 RA
-    vshl.u8    q2, q0, #4                       ; B,R BBBB0000
-    vshr.u8    q1, q0, #4                       ; G,A 0000GGGG
-    vshr.u8    q0, q2, #4                       ; B,R 0000BBBB
-    vorr.u8    q0, q0, q2                       ; B,R BBBBBBBB
-    vshl.u8    q2, q1, #4                       ; G,A GGGG0000
-    vorr.u8    q1, q1, q2                       ; G,A GGGGGGGG
-    vswp.u8    d1, d2                           ; B,R,G,A -> B,G,R,A
+MACRO ARGB4444TOARGB
+  vuzp.u8    d0, d1                           ; d0 BG, d1 RA
+  vshl.u8    q2, q0, #4                       ; B,R BBBB0000
+  vshr.u8    q1, q0, #4                       ; G,A 0000GGGG
+  vshr.u8    q0, q2, #4                       ; B,R 0000BBBB
+  vorr.u8    q0, q0, q2                       ; B,R BBBBBBBB
+  vshl.u8    q2, q1, #4                       ; G,A GGGG0000
+  vorr.u8    q1, q1, q2                       ; G,A GGGGGGGG
+  vswp.u8    d1, d2                           ; B,R,G,A -> B,G,R,A
   MEND
 
-  ; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
-  MACRO
-  RGBTOUV   $QB, $QG, $QR
-    vmul.s16    q8,  $QB , q10                 ; B
-    vmls.s16   q8,  $QG , q11                 ; G
-    vmls.s16   q8,  $QR , q12                 ; R
-    vadd.u16   q8, q8, q15                    ; +128 -> unsigned
-    vmul.s16   q9,  $QR , q10                 ; R
-    vmls.s16   q9,  $QG , q14                 ; G
-    vmls.s16   q9,  $QB , q13                 ; B
-    vadd.u16   q9, q9, q15                    ; +128 -> unsigned
-    vqshrn.u16  d0, q8, #8                    ; 16 bit to 8 bit U
-    vqshrn.u16  d1, q9, #8                    ; 16 bit to 8 bit V
-  MEND
-
-  ; RGB555TOARGB is same as ARGB1555TOARGB but ignores alpha.
-  MACRO
-  RGB555TOARGB
-    vshrn.u16  d6, q0, #5                       ; G xxxGGGGG
-    vuzp.u8    d0, d1                           ; d0 xxxBBBBB xRRRRRxx
-    vshl.u8    d6, d6, #3                       ; G GGGGG000 upper 5
-    vshr.u8    d1, d1, #2                       ; R 00xRRRRR lower 5
-    vshl.u8    q0, q0, #3                       ; B,R BBBBB000 upper 5
-    vshr.u8    q2, q0, #5                       ; B,R 00000BBB lower 3
-    vorr.u8    d0, d0, d4                       ; B
-    vshr.u8    d4, d6, #5                       ; G 00000GGG lower 3
-    vorr.u8    d2, d1, d5                       ; R
-    vorr.u8    d1, d4, d6                       ; G
+; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
+MACRO RGBTOUV $QB, $QG, $QR
+  vmul.s16   q8, $QB , q10                  ; B
+  vmls.s16   q8, $QG , q11                  ; G
+  vmls.s16   q8, $QR , q12                  ; R
+  vadd.u16   q8, q8, q15                    ; +128 -> unsigned
+  vmul.s16   q9, $QR , q10                  ; R
+  vmls.s16   q9, $QG , q14                  ; G
+  vmls.s16   q9, $QB , q13                  ; B
+  vadd.u16   q9, q9, q15                    ; +128 -> unsigned
+  vqshrn.u16  d0, q8, #8                    ; 16 bit to 8 bit U
+  vqshrn.u16  d1, q9, #8                    ; 16 bit to 8 bit V
   MEND
 
 
@@ -375,31 +337,43 @@ kYToRgb     DCD   0x0101 * YG, 0, 0, 0
 
 I444ToARGBRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb
-  push      {r4, r5}
-  ldr       r4, [sp,#8]      ; int width
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
+  ;   r0 = const uint8* src_y
+  ;   r1 = const uint8* src_u
+  ;   r2 = const uint8* src_v
+  ;   r3 = uint8* dst_argb
+  ;   r4 = const struct YuvConstants* yuvconstants (ignored)
+  ;   r5 = int width
+  ;
+  ;   "+r"(src_y),     // %0 r0
+  ;   "+r"(src_u),     // %1 r1
+  ;   "+r"(src_v),     // %2 r2
+  ;   "+r"(dst_argb),  // %3 r3
+  ;   "+r"(width)      // %4 r4
 
-  YUV422TORGB_SETUP_REG
+  push      {r4}
+  ldr       r4, [sp,#8]      ; int width
+
+  vpush     {q0-q4}
+  vpush     {q8-q15}
+
+  YUVTORGB_SETUP
+  vmov.u8    d23, #255
+
 1
   READYUV444
-  YUV422TORGB
+  YUVTORGB
   subs       r4, r4, #8
-  vmov.u8    d23, #255
-  MEMACCESS  3
   vst4.8     {d20, d21, d22, d23}, [r3]!
   bgt        %b1
 
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r4, r5}
+  vpop      {q8-q15}
+  vpop      {q0-q4}
+  pop       {r4}
+
   bx        lr
   ENDP
 
+;*************************************************
 I422ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -455,7 +429,9 @@ I422AlphaToARGBRow_NEON PROC
   pop       {r5, r6}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToRGBARow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -482,8 +458,10 @@ I422ToRGBARow_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -510,8 +488,10 @@ I411ToARGBRow_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 I422ToBGRARow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -539,8 +519,10 @@ I422ToBGRARow_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 I422ToABGRRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -568,7 +550,9 @@ I422ToABGRRow_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToRGB24Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -594,7 +578,9 @@ I422ToRGB24Row_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToRAWRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -621,7 +607,9 @@ I422ToRAWRow_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToARGB4444Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -650,7 +638,9 @@ I422ToARGB4444Row_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToARGB1555Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -678,7 +668,9 @@ I422ToARGB1555Row_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToRGB565Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -705,7 +697,9 @@ I422ToRGB565Row_NEON PROC
   pop       {r4, r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I400ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -731,7 +725,9 @@ I400ToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 J400ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -756,8 +752,10 @@ J400ToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 ARGBToRGB24Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -776,7 +774,9 @@ ARGBToRGB24Row_NEON PROC
   vpop      {d1 - d4}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToRAWRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -796,7 +796,9 @@ ARGBToRAWRow_NEON PROC
   vpop      {d1 - d4}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToRGB565Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -818,7 +820,9 @@ ARGBToRGB565Row_NEON PROC
   vpop     {q0}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToARGB1555Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -840,7 +844,9 @@ ARGBToARGB1555Row_NEON PROC
   vpop     {q0}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToARGB4444Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -863,7 +869,9 @@ ARGBToARGB4444Row_NEON PROC
   vpop     {q0}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 NV12ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -890,7 +898,9 @@ NV12ToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 NV21ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -917,7 +927,9 @@ NV21ToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 NV12ToRGB565Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -944,7 +956,9 @@ NV12ToRGB565Row_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 NV21ToRGB565Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -971,7 +985,9 @@ NV21ToRGB565Row_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 YUY2ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_yuy2
@@ -996,7 +1012,9 @@ YUY2ToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 UYVYToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_uyvy
@@ -1021,7 +1039,9 @@ UYVYToARGBRow_NEON PROC
   pop       {r5}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Reads 16 pairs of UV and write even values to dst_u and odd to dst_v.
 SplitUVRow_NEON PROC
   ; input
@@ -1044,7 +1064,9 @@ SplitUVRow_NEON PROC
   vpop       {q0, q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Reads 16 U's and V's and writes out 16 pairs of UV
 MergeUVRow_NEON PROC
   ; input
@@ -1067,7 +1089,9 @@ MergeUVRow_NEON PROC
   vpop       {q0, q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Copy multiple of 32.  vld4.8  allow unaligned and is fastest on a15.
 CopyRow_NEON PROC
   ; input
@@ -1087,7 +1111,9 @@ CopyRow_NEON PROC
   vpop       {q0, q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; SetRow writes 'count' bytes using an 8 bit value repeated
 SetRow_NEON PROC
   ; input
@@ -1106,7 +1132,9 @@ SetRow_NEON PROC
   vpop      {q0}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; ARGBSetRow writes 'count' pixels using an 32 bit value repeated.
 ARGBSetRow_NEON PROC
   ; input
@@ -1125,7 +1153,9 @@ ARGBSetRow_NEON PROC
   vpop      {q0}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 MirrorRow_NEON PROC
   ; input
   ;     r0 = const uint8* src
@@ -1153,8 +1183,10 @@ MirrorRow_NEON PROC
   pop       {r3}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 MirrorUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_uv
@@ -1183,7 +1215,9 @@ MirrorUVRow_NEON PROC
   pop       {r12}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBMirrorRow_NEON PROC
   ; input
   ;     r0 = const uint8* src
@@ -1212,8 +1246,10 @@ ARGBMirrorRow_NEON PROC
   pop       {r3}
   bx        lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 RGB24ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgb24
@@ -1233,7 +1269,9 @@ RGB24ToARGBRow_NEON PROC
   vpop      {d1 - d4}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 RAWToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_raw
@@ -1254,7 +1292,9 @@ RAWToARGBRow_NEON PROC
   vpop      {d1 - d4}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 RAWToRGB24Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_raw
@@ -1274,7 +1314,9 @@ RAWToRGB24Row_NEON PROC
   vpop      {d1 - d4}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 RGB565ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgb565
@@ -1295,7 +1337,9 @@ RGB565ToARGBRow_NEON PROC
   vpop	     {q0 - q3}
    bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGB1555ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb1555
@@ -1316,7 +1360,9 @@ ARGB1555ToARGBRow_NEON PROC
   vpop	     {q0 - q3}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGB4444ToARGBRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb4444
@@ -1337,7 +1383,9 @@ ARGB4444ToARGBRow_NEON PROC
   vpop	    {q0 - q2}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ABGRToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_abgr
@@ -1392,7 +1440,9 @@ ABGRToUVRow_NEON PROC
   pop        {r4}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 RGBAToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgba
@@ -1447,7 +1497,9 @@ RGBAToUVRow_NEON PROC
   pop        {r4}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ABGRToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_abgr
@@ -1478,7 +1530,9 @@ ABGRToYRow_NEON PROC
   vpop	    {d0 - d7}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 RGBAToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgba
@@ -1509,7 +1563,9 @@ RGBAToYRow_NEON PROC
   vpop	     {d0 - d7}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
 RGB24ToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgb24
@@ -1540,7 +1596,9 @@ RGB24ToYRow_NEON PROC
   vpop	     {d0 - d7}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
 ARGB1555ToUVRow_NEON PROC
   ; input
@@ -1616,8 +1674,9 @@ ARGB1555ToUVRow_NEON PROC
   pop		  	{r4}
   bx		  	lr
   ENDP
+;*************************************************
 
-
+;*************************************************
 ; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
 ARGB4444ToUVRow_NEON PROC
   ; input
@@ -1693,7 +1752,9 @@ ARGB4444ToUVRow_NEON PROC
   pop		  	{r4}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 RGB565ToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgb565
@@ -1725,7 +1786,9 @@ RGB565ToYRow_NEON PROC
   vpop	    {q0 - q3}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
 RGB565ToUVRow_NEON PROC
   ; input
@@ -1801,7 +1864,9 @@ RGB565ToUVRow_NEON PROC
   pop		  	{r4}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGB1555ToYRow_NEON PROC
    ; input
   ;     r0 = const uint8* src_argb1555
@@ -1833,7 +1898,9 @@ ARGB1555ToYRow_NEON PROC
   vpop	  	{q0 - q3}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGB4444ToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb4444
@@ -1865,7 +1932,9 @@ ARGB4444ToYRow_NEON PROC
   vpop	  	{q0 - q3}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 BGRAToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_bgra
@@ -1896,7 +1965,9 @@ BGRAToYRow_NEON PROC
   vpop		  {q0 - q3}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; 32x1 pixels -> 8x1.  pix is number of argb pixels. e.g. 32.
 ARGBToUV411Row_NEON PROC
     ; input
@@ -1964,7 +2035,9 @@ ARGBToUV411Row_NEON PROC
   vpop	    {q0 - q7}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToUV422Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -2017,7 +2090,9 @@ ARGBToUV422Row_NEON PROC
   vpop	     {q0 - q7}
   bx		  	 lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; 8x1 pixels.
 ARGBToUV444Row_NEON PROC
   ; input
@@ -2062,7 +2137,9 @@ ARGBToUV444Row_NEON PROC
   vpop	     {q0 - q4}
   bx		  	 lr
   ENDP
+;*************************************************
 
+;*************************************************
 YUY2ToUV422Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_yuy2
@@ -2084,8 +2161,9 @@ YUY2ToUV422Row_NEON PROC
   vpop	     {d0 - d3}
   bx		  	 lr
   ENDP
+;*************************************************
 
-
+;*************************************************
 UYVYToUV422Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_uyvy
@@ -2107,7 +2185,9 @@ UYVYToUV422Row_NEON PROC
   vpop	     {d0 - d3}
   bx		  	 lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; Select G channels from ARGB.  e.g.  GGGGGGGG
 ARGBToBayerGGRow_NEON PROC
   ; input
@@ -2128,7 +2208,9 @@ ARGBToBayerGGRow_NEON PROC
   vpop		{q0, q1}
   bx			lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; For BGRAToARGB, ABGRToARGB, RGBAToARGB, and ARGBToRGBA.
 ARGBShuffleRow_NEON PROC
   ; input
@@ -2153,7 +2235,9 @@ ARGBShuffleRow_NEON PROC
   vpop		{q0 - q2}
   bx			lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; TODO(fbarchard): Subsample match C code.
 ARGBToUVJRow_NEON PROC
   ; input
@@ -2209,8 +2293,10 @@ ARGBToUVJRow_NEON PROC
   pop		  	{r4}
   bx		  	lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 BGRAToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_bgra
@@ -2265,7 +2351,9 @@ BGRAToUVRow_NEON PROC
   pop		  	{r4}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBExtractAlphaRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -2285,7 +2373,9 @@ ARGBExtractAlphaRow_NEON PROC
   vpop      {q0 - q3}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToYJRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -2314,7 +2404,9 @@ ARGBToYJRow_NEON PROC
   vpop      {q0 - q2}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToYUY2Row_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -2341,7 +2433,9 @@ I422ToYUY2Row_NEON PROC
   pop		    {r4}
   bx 		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 I422ToUYVYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_y
@@ -2368,7 +2462,9 @@ I422ToUYVYRow_NEON PROC
   pop		    {r4}
   bx 			  lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; TODO(fbarchard): Consider vhadd vertical, then vpaddl horizontal, ashr.
 ARGBToUVRow_NEON PROC
   ; input
@@ -2424,7 +2520,9 @@ ARGBToUVRow_NEON PROC
   pop		    	{r4}
   bx		    	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_bgra
@@ -2455,7 +2553,9 @@ ARGBToYRow_NEON PROC
   vpop		   {q0-q2}
   bx	       lr
   ENDP
+;*************************************************
 
+;*************************************************
 RAWToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_raw
@@ -2510,7 +2610,9 @@ RAWToUVRow_NEON PROC
   pop		     {r4}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
 RAWToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_raw
@@ -2541,8 +2643,10 @@ RAWToYRow_NEON PROC
   vpop		  {d0-d7}
   bx			  lr
   ENDP
+;*************************************************
 
 
+;*************************************************
 RGB24ToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_rgb24
@@ -2597,7 +2701,9 @@ RGB24ToUVRow_NEON PROC
   pop		     {r4}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
 UYVYToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_uyvy
@@ -2631,7 +2737,9 @@ UYVYToUVRow_NEON PROC
   pop		    	{r4}
   bx		    	lr
   ENDP
+;*************************************************
 
+;*************************************************
 UYVYToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_uyvy
@@ -2650,7 +2758,9 @@ UYVYToYRow_NEON PROC
   vpop		   {q0, q1}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
 YUY2ToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_yuy2
@@ -2681,7 +2791,9 @@ YUY2ToUVRow_NEON PROC
   pop		   {r4}
   bx		   lr
   ENDP
+;*************************************************
 
+;*************************************************
 YUY2ToYRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_yuy2
@@ -2700,7 +2812,9 @@ YUY2ToYRow_NEON PROC
   vpop       {q0, q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ARGBToRGB565DitherRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -2727,7 +2841,9 @@ ARGBToRGB565DitherRow_NEON PROC
   vpop      {q0, q1}
   bx        lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Add 2 rows of ARGB pixels together, 8 pixels at a time.
 ARGBAddRow_NEON PROC
   ; input
@@ -2752,7 +2868,9 @@ ARGBAddRow_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Subtract 2 rows of ARGB pixels, 8 pixels at a time.
 ARGBSubtractRow_NEON PROC
   ; input
@@ -2778,7 +2896,9 @@ ARGBSubtractRow_NEON PROC
   vpop       {q0 - q3}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Adds Sobel X and Sobel Y and stores Sobel into ARGB.
 ; A = 255
 ; R = Sobel
@@ -2810,7 +2930,9 @@ SobelRow_NEON PROC
   vpop       {q0 - q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Adds Sobel X and Sobel Y and stores Sobel into plane.
 SobelToPlaneRow_NEON PROC
   ; input
@@ -2835,7 +2957,9 @@ SobelToPlaneRow_NEON PROC
   vpop       {q0 - q1}
   bx         lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Attenuate 8 pixels at a time.
 ARGBAttenuateRow_NEON PROC
   ; input
@@ -2864,7 +2988,9 @@ ARGBAttenuateRow_NEON PROC
   vpop		  {q0 - q1}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Quantize 8 ARGB pixels (32 bytes).
 ; dst = (dst * scale >> 16) * interval_size + interval_offset;
 ARGBQuantizeRow_NEON PROC
@@ -2912,7 +3038,9 @@ ARGBQuantizeRow_NEON PROC
   pop		  	{r2 - r4}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Shade 8 pixels at a time by specified value.
 ; NOTE vqrdmulh.s16 q10, q10, d0[0] must use a scaler register from 0 to 8.
 ; Rounding in vqrdmulh does +1 to high if high bit of low s16 is set.
@@ -2954,7 +3082,9 @@ ARGBShadeRow_NEON PROC
   vpop		  {q0}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Convert 8 ARGB pixels (64 bytes) to 8 Gray ARGB pixels
 ; Similar to ARGBToYJ but stores ARGB.
 ; C code is (15 * b + 75 * g + 38 * r + 64) >> 7;
@@ -2988,7 +3118,9 @@ ARGBGrayRow_NEON PROC
   vpop		  {q0 - q2}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Convert 8 ARGB pixels (32 bytes) to 8 Sepia ARGB pixels.
 ;    b = (r * 35 + g * 68 + b * 17) >> 7
 ;    g = (r * 45 + g * 88 + b * 22) >> 7
@@ -3034,7 +3166,9 @@ ARGBSepiaRow_NEON PROC
   vpop	  	{q0 - q3}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Tranform 8 ARGB pixels (32 bytes) with color matrix.
 ; TODO(fbarchard): Was same as Sepia except matrix is provided.  This function
 ; needs to saturate.  Consider doing a non-saturating version.
@@ -3102,7 +3236,9 @@ ARGBColorMatrixRow_NEON PROC
   vpop	  	{q0 - q7}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
   ; dr * (256 - sa) / 256 + sr = dr - dr * sa / 256 + sr
 ARGBBlendRow_NEON PROC
    ; input
@@ -3169,7 +3305,9 @@ ARGBBlendRow_NEON PROC
   vpop		  {q0 - q3}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Bilinear filter 16x2 -> 16x1
 InterpolateRow_NEON PROC
    ; input
@@ -3272,7 +3410,9 @@ InterpolateRow_NEON PROC
   pop			  {r4}
   bx			  lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Multiply 2 rows of ARGB pixels together, 8 pixels at a time.
 ARGBMultiplyRow_NEON PROC
    ; input
@@ -3304,7 +3444,9 @@ ARGBMultiplyRow_NEON PROC
   vpop	  	 {q0 - q3}
   bx			   lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; SobelX as a matrix is
 ; -1  0  1
 ; -2  0  2
@@ -3351,7 +3493,9 @@ SobelXRow_NEON PROC
   pop		  	{r4 - r6}
   bx		  	lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; SobelY as a matrix is
 ; -1 -2 -1
 ;  0  0  0
@@ -3397,7 +3541,9 @@ SobelYRow_NEON PROC
   vpop	     {q0 - q1}
   bx		     lr
   ENDP
+;*************************************************
 
+;*************************************************
 ; Mixes Sobel X, Sobel Y and Sobel into ARGB.
 ; A = 255
 ; R = Sobel X
@@ -3428,6 +3574,7 @@ SobelXYRow_NEON PROC
   vpop	     {q0 - q1}
   bx		     lr
   ENDP
+;*************************************************
 
 
   END
