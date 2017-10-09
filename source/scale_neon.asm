@@ -1231,3 +1231,4 @@ ScaleARGBFilterCols_NEON PROC
   bx         lr
   ENDP
 
+  END
