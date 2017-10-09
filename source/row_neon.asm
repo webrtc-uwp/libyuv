@@ -353,8 +353,7 @@ I444ToARGBRow_NEON PROC
   push      {r5}
   ldr       r5, [sp,#8]      ; int width
 
-  vpush     {q0-q4}
-  vpush     {q8-q15}
+  vpush     {q4}
 
   YUVTORGB_SETUP
   vmov.u8    d23, #255
@@ -366,41 +365,11 @@ I444ToARGBRow_NEON PROC
   vst4.8     {d20, d21, d22, d23}, [r3]!
   bgt        %b1
 
-  vpop      {q8-q15}
-  vpop      {q0-q4}
+  vpop      {q4}
   pop       {r5}
 
   bx        lr
   ENDP
-
-;*************************************************
-I422ToARGBRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb
-  push      {r4, r5}
-  ldr       r4, [sp,#8]      ; int width
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
-
-  YUV422TORGB_SETUP_REG
-1
-  READYUV422
-  YUV422TORGB
-  subs       r4, r4, #8
-  vmov.u8    d23, #255
-  MEMACCESS  3
-  vst4.8     {d20, d21, d22, d23}, [r3]!
-  bgt        %b1
-
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r4, r5}
-  bx        lr
-  ENDP
-
 
 I422ToARGBRow_NEON PROC
   ; input
@@ -408,7 +377,7 @@ I422ToARGBRow_NEON PROC
   ;   r1 = const uint8* src_u
   ;   r2 = const uint8* src_v
   ;   r3 = uint8* dst_argb
-  ;   r4 = const struct YuvConstants* yuvconstants
+  ;   r4 = const struct YuvConstants* yuvconstants (ignored)
   ;   r5 = int width
   ;
   ;  "+r"(src_y),         %0 r0
@@ -417,37 +386,22 @@ I422ToARGBRow_NEON PROC
   ;  "+r"(dst_argb),      %3 r3
   ;  "+r"(width)          %4 r5
 
+  push      {r4}
+  ldr       r4, [sp,#8]      ; int width
+
+  YUVTORGB_SETUP
+  vmov.u8    d23, #255
+1
+  READYUV422
+  YUVTORGB
+  subs       %4, %4, #8
+  vst4.8     {d20, d21, d22, d23}, [r3]!
+  bgt        %b1
+
   pop       {r4}
 
   bx        lr
   ENDP
-
-void I422ToARGBRow_NEON(const uint8* src_y,
-                        const uint8* src_u,
-                        const uint8* src_v,
-                        uint8* dst_argb,
-                        const struct YuvConstants* yuvconstants,
-                        int width) {
-  asm volatile(
-      YUVTORGB_SETUP
-      "vmov.u8    d23, #255                      \n"
-      "1:                                          \n" READYUV422 YUVTORGB
-      "subs       %4, %4, #8                     \n"
-      "vst4.8     {d20, d21, d22, d23}, [%3]!    \n"
-      "bgt        1b                             \n"
-      : "+r"(src_y),     // %0
-        "+r"(src_u),     // %1
-        "+r"(src_v),     // %2
-        "+r"(dst_argb),  // %3
-        "+r"(width)      // %4
-      : [kUVToRB] "r"(&yuvconstants->kUVToRB),
-        [kUVToG] "r"(&yuvconstants->kUVToG),
-        [kUVBiasBGR] "r"(&yuvconstants->kUVBiasBGR),
-        [kYToRgb] "r"(&yuvconstants->kYToRgb)
-      : "cc", "memory", "q0", "q1", "q2", "q3", "q4", "q8", "q9", "q10", "q11",
-        "q12", "q13", "q14", "q15");
-}
-
 
 ;*************************************************
 I422AlphaToARGBRow_NEON PROC
