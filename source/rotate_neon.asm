@@ -43,8 +43,6 @@ TransposeWx8_NEON PROC
   ldr         r4, [sp, #12]       ; int width 
   adr         r6, kVTbl4x4Transpose
   
-  vpush       {q0-q3}
-
   ; loops are on blocks of 8. loop will stop when
   ; counter gets to or below 0. starting the counter
   ; at w-8 allow for this
@@ -193,7 +191,6 @@ TransposeWx8_NEON PROC
 
 4
 
-  vpop        {q0-q3}
   pop         {r4-r6} 
 
   bx          lr
@@ -224,11 +221,6 @@ TransposeUVWx8_NEON PROC
   ldr        r6, [sp, #24] ; int dst_stride_b
   ldr        r7, [sp, #28] ; int width
   adr        r8, kVTbl4x4TransposeDi
-
-  vpush      {d0-d7}
-  vpush      {d16-d23}
-  vpush      {q0-q3}
-  vpush      {q8-q11}
 
   ; loops are on blocks of 8. loop will stop when
   ; counter gets to or below 0. starting the counter
@@ -426,10 +418,6 @@ TransposeUVWx8_NEON PROC
 
 4
 
-  vppp        {q8-q11}
-  vpop        {q0-q3}
-  vpop        {d16-d23}
-  vpop        {d0-d7}
   pop         {r4-r6} 
 
   bx          lr

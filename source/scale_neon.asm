@@ -63,16 +63,12 @@ ScaleRowDown2_NEON PROC
   ;   "+r"(dst),       %1 r2
   ;   "+r"(dst_width)  %2 r3
 
-  vpush      {q0-q1}
-
 1
   ; load even pixels into q0, odd into q1
   vld2.8     {q0, q1}, [r0]!
   subs       r3, r3, #16                      ; 16 processed per loop
   vst1.8     {q1}, [r2]!                      ; store odd pixels
   bgt        %b1
-
-  vpop       {q0-q1}
 
   bx         lr
   ENDP
@@ -89,9 +85,6 @@ ScaleRowDown2Linear_NEON PROC
   ;   "+r"(dst),          %1 r2
   ;   "+r"(dst_width)     %2 r3
 
-  vpush      {q0-q1}
-  vpush      {d0-d1}
-
 1
   vld1.8     {q0, q1}, [r0]!                  ; load pixels and post
                                               ; inc
@@ -103,9 +96,6 @@ ScaleRowDown2Linear_NEON PROC
   vrshrn.u16 d1, q1, #1
   vst1.8     {q0}, [r2]!
   bgt        %b1
-
-  vpop       {d0-d1}
-  vpop       {q0-q1}
 
   bx         lr
   ENDP
@@ -122,9 +112,6 @@ ScaleRowDown2Box_NEON PROC
   ;   "+r"(src_stride),   %1 r1
   ;   "+r"(dst),          %2 r2
   ;   "+r"(dst_width)     %3 r3
-
-  vpush      {q0-q3}
-  vpush      {d0-d1}
 
   ; change the stride to row 2 pointer
   add        r1, r0
@@ -143,9 +130,6 @@ ScaleRowDown2Box_NEON PROC
   vst1.8     {q0}, [r2]!
   bgt        %b1
 
-  vpop       {d0-d1}
-  vpop       {q0-q3}
-
   bx         lr
   ENDP
 
@@ -160,17 +144,11 @@ ScaleRowDown4_NEON PROC
   ;   "+r"(dst_ptr),      %1 r2
   ;   "+r"(dst_width)     %2 r3
 
-  vpush       {q0-q1}
-  vpush       {d0-d3}
-
 1
   vld4.8      {d0, d1, d2, d3}, [r0]!        ; src line 0
   subs        r3, r3, #8                     ; 8 processed per loop
   vst1.8      {d2}, [r2]!
   bgt         %b1
-
-  vpop        {d0-d3}
-  vpop        {q0-q1}
 
   bx          lr
   ENDP
@@ -193,7 +171,6 @@ ScaleRowDown4Box_NEON PROC
   ;   "+r"(src_ptr3)      %5 r6
 
   push       {r4-r6}
-  vpush      {q0-q3}
 
   add        r4, r0, r1 ; src_ptr + src_stride
   add        r5, r4, r1 ; src_ptr + src_stride * 2
@@ -215,7 +192,6 @@ ScaleRowDown4Box_NEON PROC
   vst1.32    {d0[0]}, [r2]!
   bgt        %b1
 
-  vpop       {q0-q3}
   pop        {r4-r6}
 
   bx         lr
@@ -235,16 +211,12 @@ ScaleRowDown34_NEON PROC
   ;   "+r"(dst_ptr),      %1 r2
   ;   "+r"(dst_width)     %2 r3
 
-  vpush      {d0-d3}
-
 1
   vld4.8    {d0, d1, d2, d3}, [r0]!     ; src line 0
   subs      r3, r3, #24
   vmov      d2, d3                      ; order d0, d1, d2
   vst3.8     {d0, d1, d2}, [r2]!
   bgt        %b1
-
-  vpop       {d0-d3}
 
   bx         lr
   ENDP
@@ -260,11 +232,6 @@ ScaleRowDown34_0_Box_NEON PROC
   ;     "+r"(dst_ptr),    %1 r2
   ;     "+r"(dst_width),  %2 r3
   ;     "+r"(src_stride)  %3 r1
-
-  vpush      {q0-q3}
-  vpush      {q8-q11}
-  vpush      {d0-d7}
-  vpush      {d24}
 
   vmov.u8    d24, #3
   add        r1, r0
@@ -310,11 +277,6 @@ ScaleRowDown34_0_Box_NEON PROC
 
   bgt          %b1
 
-  vpop        {d24}
-  vpop        {d0-d7}
-  vpop        {q8-q11}
-  vpop        {q0-q3}
-
   bx          lr
   ENDP
 
@@ -331,8 +293,6 @@ ScaleRowDown34_1_Box_NEON PROC
   ;   "+r"(src_stride)    %3 r1
 
   push       {r4}
-  vpush      {q0-q3}
-  vpush      {d24}
 
   vmov.u8    d24, #3
   add        r1, r0
@@ -361,8 +321,6 @@ ScaleRowDown34_1_Box_NEON PROC
   vst3.8       {d0, d1, d2}, [r2]!
   bgt          %b1
 
-  vpop         {d24}
-  vpop         {q0-q3}
   pop          {r4}
 
   bx           lr
@@ -382,7 +340,6 @@ ScaleRowDown38_NEON PROC
   ;   "r"(&kShuf38)       %3 r4
 
   push       {r4}
-  vpush      {d0-d5}
 
   adr        r4, kShuf38
 
@@ -397,7 +354,6 @@ ScaleRowDown38_NEON PROC
   vst1.32    {d5[0]}, [r2]!
   bgt        %b1
 
-  vpop       {d0-d5}
   pop        {r4}
 
   bx         lr
@@ -421,10 +377,6 @@ ScaleRowDown38_3_Box_NEON PROC
   ;   "r"(&kMult38_Div9)  %7 r7
 
   push       {r4-r7}
-  vpush      {q0-q3}
-  vpush      {q8-q9}
-  vpush      {q13-q15}
-  vpush      {d16-d19}
 
   add        r4, r0, r1
   add        r4, r4, r1      ; src_ptr + src_stride * 2
@@ -525,10 +477,6 @@ ScaleRowDown38_3_Box_NEON PROC
   vst1.32      {d4[0]}, [r2]!
   bgt          %b1
 
-  vpop         {d16-d19}
-  vpop         {q13-q15}
-  vpop         {q8-q9}
-  vpop         {q0-q3}
   pop          {r4-r7}
 
   bx           lr
@@ -550,10 +498,6 @@ ScaleRowDown38_2_Box_NEON PROC
   ;   "r"(&kShuf38_2)     %5 r5
 
   push         {r4-r5}
-  vpush        {q0-q3}
-  vpush        {q13-q14}
-  vpush        {d0-d7}
-  vpush        {d28-d29}
 
   adr          r4, kMult38_Div6
   adr          r5, kShuf38_2
@@ -638,10 +582,6 @@ ScaleRowDown38_2_Box_NEON PROC
   vst1.32      {d4[0]}, [r2]!
   bgt          %b1
 
-  vpop         {d28-d29}
-  vpop         {d0-d7}
-  vpop         {q13-q14}
-  vpop         {q0-q3}
   pop          {r4-r5}
 
   bx           lr
@@ -665,8 +605,6 @@ ScaleAddRows_NEON PROC
   push      {r4, r5, r12}
   ldr       r4, [SP, #12]                     ; int src_height
 
-  vpush     {q0-q3}
-
 1
   mov       r5, r0
   mov       r12, r4
@@ -684,7 +622,6 @@ ScaleAddRows_NEON PROC
   subs       r3, r3, #16                      ; 16 processed per loop
   bgt        %b1
 
-  vpop       {q0-q3}
   pop        {r4, r5, r12}
 
   bx         lr
@@ -725,11 +662,6 @@ ScaleFilterCols_NEON PROC
   ldr        r4, [sp, #12]                    ; int dx
   adr        r5,  dx_offset                   ; aka tmp
   mov        r6,  r1                          ; src_tmp = src_ptr
-
-  vpush      {q0-q3}
-  vpush      {q8-q13}
-  vpush      {d6-d7}
-  vpush      {d18-d21}
 
   vdup.32    q0, r3                           ; x
   vdup.32    q1, r4                           ; dx
@@ -773,10 +705,6 @@ ScaleFilterCols_NEON PROC
   subs       r2, r2, #8                       ; 8 processed per loop
   bgt        %b1
 
-  vpop       {d18-d21}
-  vpop       {d6-d7}
-  vpop       {q8-q13}
-  vpop       {q0-q3}
   pop        {r5-r6}
 
   bx         lr
@@ -800,10 +728,6 @@ ScaleFilterRows_NEON PROC
 
   push         {r5}
   ldr          r4, [sp, #4]                    ; int source_y_fraction
-
-  vpush        {q0-q1}
-  vpush        {d4-d5}
-  vpush        {q13-q14}
 
   cmp          r4, #0
   beq          %f100
@@ -875,9 +799,6 @@ ScaleFilterRows_NEON PROC
 99
   vst1.8       {d1[7]}, [r0]
 
-  vpop         {q13-q14}
-  vpop         {d4-d5}
-  vpop         {q0-q1}
   pop          {r5}
 
   bx           lr
@@ -894,8 +815,6 @@ ScaleARGBRowDown2_NEON PROC
   ;   "+r"(dst),          %1 r2
   ;   "+r"(dst_width)     %2 r3
 
-  vpush      {q0-q3}
-
 1
   ; load even pixels into q0, odd into q1
   vld2.32    {q0, q1}, [r0]!
@@ -904,8 +823,6 @@ ScaleARGBRowDown2_NEON PROC
   vst1.8     {q1}, [r2]!              ; store odd pixels
   vst1.8     {q3}, [r2]!
   bgt        %b1
-
-  vpop       {q0-q3}
 
   bx         lr
   ENDP
@@ -920,9 +837,6 @@ ScaleARGBRowDown2Linear_NEON PROC
   ;   "+r"(src_argb),     %0 r0
   ;   "+r"(dst_argb),     %1 r2
   ;   "+r"(dst_width)     %2 r3
-
-  vpush      {q0-q3}
-  vpush      {d0-d7}
 
 1
   vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels.
@@ -941,9 +855,6 @@ ScaleARGBRowDown2Linear_NEON PROC
   vst4.8     {d0, d1, d2, d3}, [r2]!
   bgt        %b1
 
-  vpop       {d0-d7}
-  vpop       {q0-q3}
-
   bx         lr
   ENDP
 
@@ -958,9 +869,6 @@ ScaleARGBRowDown2Box_NEON PROC
   ;   "+r"(src_stride),   %1 r1
   ;   "+r"(dst),          %2 r2
   ;   "+r"(dst_width)     %3 r3
-
-  vpush      {q0-q3}
-  vpush      {q8-q11}
 
   ; change the stride to row 2 pointer
   add        r1, r1, r0
@@ -990,9 +898,6 @@ ScaleARGBRowDown2Box_NEON PROC
   vst4.8     {d0, d1, d2, d3}, [r2]!
   bgt        %b1
 
-  vpop       {q8-q11}
-  vpop       {q0-q3}
-
   bx         lr
   ENDP
 
@@ -1014,8 +919,6 @@ ScaleARGBRowDownEven_NEON PROC
   push       {r4, r12}
   ldr        r4, [sp, #8]                     ; int dst_width
 
-  vpush      {q0}
-
   mov        r12, r2, lsl #2
 
 1
@@ -1027,7 +930,6 @@ ScaleARGBRowDownEven_NEON PROC
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  vpop       {q0}
   pop        {r4, r12}
 
   bx         lr
@@ -1050,9 +952,6 @@ ScaleARGBRowDownEvenBox_NEON PROC
 
   push       {r4, r12}
   ldr        r4, [sp, #8]                     ; int dst_width
-
-  vpush      {q0-q3}
-  vpush      {d0-d7}
 
   mov        r12, r2, lsl #2
   add        r1, r1, r0
@@ -1080,8 +979,6 @@ ScaleARGBRowDownEvenBox_NEON PROC
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  vpop       {d0-d7}
-  vpop       {q0-q3}
   pop        {r4, r12}
 
   bx         lr
@@ -1118,8 +1015,6 @@ ScaleARGBCols_NEON PROC
   ldr        r4, [sp,#12]                     ; int dx
   mov        r6, r1                           ; src_tmp = src_argb
 
-  vpush      {q0-q1}
-
 1
   LOAD1_DATA32_LANE d0, 0
   LOAD1_DATA32_LANE d0, 1
@@ -1135,7 +1030,6 @@ ScaleARGBCols_NEON PROC
                                               ; loop
   bgt        %b1
 
-  vpop       {q0-q1}
   pop        {r4-r6}
 
   bx         lr
@@ -1171,11 +1065,6 @@ ScaleARGBFilterCols_NEON PROC
 
   push       {r4-r6}
   ldr        r4, [sp,#12]                     ; int dx
-
-  vpush      {q0-q3}
-  vpush      {q8-q15}
-  vpush      {d0-d3}
-  vpush      {d22-d27}
 
   adr        r5,  dx_offset
   mov        r6, r1
@@ -1219,10 +1108,6 @@ ScaleARGBFilterCols_NEON PROC
   subs        r2, r2, #4                      ; 4 processed per loop
   bgt         %b1
 
-  vpop       {d22-d27}
-  vpop       {d0-d3}
-  vpop       {q8-q15}
-  vpop       {q0-q3}
   pop        {r4-r6}
 
   bx         lr
