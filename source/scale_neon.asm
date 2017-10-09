@@ -35,11 +35,19 @@
   EXPORT ScaleARGBFilterCols_NEON
   EXPORT ScaleARGBCols_NEON
 
+;static uvec8 kShuf38 = {0, 3, 6, 8, 11, 14, 16, 19, 22, 24, 27, 30, 0, 0, 0, 0};
 kShuf38       DCB   0, 3, 6, 8, 11, 14, 16, 19, 22, 24, 27, 30, 0, 0, 0, 0
+
+;static uvec8 kShuf38_2 = {0,  8, 16, 2,  10, 17, 4, 12,
+;                          18, 6, 14, 19, 0,  0,  0, 0};
 kShuf38_2     DCB   0, 8, 16, 2, 10, 17, 4, 12, 18, 6, 14, 19, 0, 0, 0, 0
-;vec16 kMult38_Div6 = { 65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12 }
+
+;static vec16 kMult38_Div6 = {65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12,
+;                             65536 / 12, 65536 / 12, 65536 / 12, 65536 / 12};
 kMult38_Div6  DCW   0x1555,	0x1555,	0x1555,	0x1555,	0x1555,	0x1555, 0x1555, 0x1555
-;vec16 kMult38_Div9 = { 65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18 };
+
+;static vec16 kMult38_Div9 = {65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18,
+;                             65536 / 18, 65536 / 18, 65536 / 18, 65536 / 18};
 kMult38_Div9  DCW 0xe38, 0xe38,	0xe38, 0xe38, 0xe38, 0xe38,	0xe38, 0xe38
 
 
@@ -173,7 +181,6 @@ ScaleRowDown4Box_NEON PROC
   ;   r1 = src_stride
   ;   r2 = uint8* dst_ptr
   ;   r3 = int dst_width
-  ; clobber
   ;   r4 = const uint8* src_ptr1
   ;   r5 = const uint8* src_ptr2
   ;   r6 = const uint8* src_ptr3
@@ -185,8 +192,8 @@ ScaleRowDown4Box_NEON PROC
   ;   "+r"(src_ptr2),     %4 r5
   ;   "+r"(src_ptr3)      %5 r6
 
-  vpush      {q0-q3}
   push       {r4-r6}
+  vpush      {q0-q3}
 
   add        r4, r0, r1 ; src_ptr + src_stride
   add        r5, r4, r1 ; src_ptr + src_stride * 2
@@ -208,8 +215,8 @@ ScaleRowDown4Box_NEON PROC
   vst1.32    {d0[0]}, [r2]!
   bgt        %b1
 
-  pop        {r4-r6}
   vpop       {q0-q3}
+  pop        {r4-r6}
 
   bx         lr
   ENDP
@@ -323,9 +330,9 @@ ScaleRowDown34_1_Box_NEON PROC
   ;   "+r"(dst_width),    %2 r3
   ;   "+r"(src_stride)    %3 r1
 
+  push       {r4}
   vpush      {q0-q3}
   vpush      {d24}
-  push       {r4}
 
   vmov.u8    d24, #3
   add        r1, r0
@@ -354,9 +361,9 @@ ScaleRowDown34_1_Box_NEON PROC
   vst3.8       {d0, d1, d2}, [r2]!
   bgt          %b1
 
-  pop          {r4}
   vpop         {d24}
   vpop         {q0-q3}
+  pop          {r4}
 
   bx           lr
   ENDP
@@ -374,8 +381,8 @@ ScaleRowDown38_NEON PROC
   ;   "+r"(dst_width)     %2 r3
   ;   "r"(&kShuf38)       %3 r4
 
-  vpush      {d0-d5}
   push       {r4}
+  vpush      {d0-d5}
 
   adr        r4, kShuf38
 
@@ -390,8 +397,8 @@ ScaleRowDown38_NEON PROC
   vst1.32    {d5[0]}, [r2]!
   bgt        %b1
 
-  pop        {r4}
   vpop       {d0-d5}
+  pop        {r4}
 
   bx         lr
   ENDP
@@ -413,11 +420,11 @@ ScaleRowDown38_3_Box_NEON PROC
   ;   "r"(&kShuf38_2),    %6 r6
   ;   "r"(&kMult38_Div9)  %7 r7
 
+  push       {r4-r7}
   vpush      {q0-q3}
   vpush      {q8-q9}
   vpush      {q13-q15}
   vpush      {d16-d19}
-  push       {r4-r7}
 
   add        r4, r0, r1
   add        r4, r4, r1      ; src_ptr + src_stride * 2
@@ -518,11 +525,11 @@ ScaleRowDown38_3_Box_NEON PROC
   vst1.32      {d4[0]}, [r2]!
   bgt          %b1
 
-  pop          {r4-r7}
   vpop         {d16-d19}
   vpop         {q13-q15}
   vpop         {q8-q9}
   vpop         {q0-q3}
+  pop          {r4-r7}
 
   bx           lr
   ENDP
@@ -542,11 +549,11 @@ ScaleRowDown38_2_Box_NEON PROC
   ;   "r"(&kMult38_Div6), %4 r4
   ;   "r"(&kShuf38_2)     %5 r5
 
+  push         {r4-r5}
   vpush        {q0-q3}
   vpush        {q13-q14}
   vpush        {d0-d7}
   vpush        {d28-d29}
-  push         {r4-r5}
 
   adr          r4, kMult38_Div6
   adr          r5, kShuf38_2
@@ -631,11 +638,11 @@ ScaleRowDown38_2_Box_NEON PROC
   vst1.32      {d4[0]}, [r2]!
   bgt          %b1
 
-  pop          {r4-r5}
   vpop         {d28-d29}
   vpop         {d0-d7}
   vpop         {q13-q14}
   vpop         {q0-q3}
+  pop          {r4-r5}
 
   bx           lr
   ENDP
@@ -655,10 +662,10 @@ ScaleAddRows_NEON PROC
   ;   "+r"(src_width),    %4 r3
   ;   "+r"(src_height)    %5 r4
 
-  vpush     {q0-q3}
   push      {r4, r5, r12}
+  ldr       r4, [SP, #12]                     ; int src_height
 
-  ldr       r4, [SP, #12]                   ; int src_height
+  vpush     {q0-q3}
 
 1
   mov       r5, r0
@@ -677,8 +684,8 @@ ScaleAddRows_NEON PROC
   subs       r3, r3, #16                      ; 16 processed per loop
   bgt        %b1
 
-  pop        {r4, r5, r12}
   vpop       {q0-q3}
+  pop        {r4, r5, r12}
 
   bx         lr
   ENDP
@@ -716,14 +723,14 @@ ScaleFilterCols_NEON PROC
   ;   "+r"(src_tmp)       %6 r6
 
   push       {r5-r6}
+  ldr        r4, [sp, #12]                    ; int dx
+  adr        r5,  dx_offset                   ; aka tmp
+  mov        r6,  r1                          ; src_tmp = src_ptr
+
   vpush      {q0-q3}
   vpush      {q8-q13}
   vpush      {d6-d7}
   vpush      {d18-d21}
-
-  ldr        r4, [sp, #12]                    ; int dx
-  adr        r5,  dx_offset                   ; aka tmp
-  mov        r6,  r1                          ; src_tmp = src_ptr
 
   vdup.32    q0, r3                           ; x
   vdup.32    q1, r4                           ; dx
@@ -793,11 +800,11 @@ ScaleFilterRows_NEON PROC
 
 
   push         {r5}
+  ldr          r4, [sp, #4]                    ; int source_y_fraction
+
   vpush        {q0-q1}
   vpush        {d4-d5}
   vpush        {q13-q14}
-
-  ldr          r4, [sp, #12]                    ; int source_y_fraction
 
   cmp          r4, #0
   beq          %f100
@@ -812,7 +819,7 @@ ScaleFilterRows_NEON PROC
   vdup.8       d5, r4
   rsb          r4, #256
   vdup.8       d4, r4
-  // General purpose row blend.
+  ; General purpose row blend.
 1
   vld1.8       {q0}, [r1]!
   vld1.8       {q1}, [r2]!
@@ -1006,9 +1013,9 @@ ScaleARGBRowDownEven_NEON PROC
   ;   "r"(src_stepx)      %3 r2
 
   push       {r4, r12}
-  vpush      {q0}
-
   ldr        r4, [sp, #8]                     ; int dst_width
+
+  vpush      {q0}
 
   mov        r12, r2, lsl #2
 
@@ -1043,10 +1050,10 @@ ScaleARGBRowDownEvenBox_NEON PROC
   ;    "r"(src_stepx)     %4 r2
 
   push       {r4, r12}
+  ldr        r4, [sp, #8]                     ; int dst_width
+
   vpush      {q0-q3}
   vpush      {d0-d7}
-
-  ldr        r4, [sp, #8]                     ; int dst_width
 
   mov        r12, r2, lsl #2
   add        r1, r1, r0
@@ -1081,31 +1088,39 @@ ScaleARGBRowDownEvenBox_NEON PROC
   bx         lr
   ENDP
 
-
-;************************
-  ; TODO(Yang Zhang): Investigate less load instructions for
-  ; the x/dx stepping
-  MACRO
+; clang-format off
+; TODO(Yang Zhang): Investigate less load instructions for
+; the x/dx stepping
+MACRO
   LOAD1_DATA32_LANE $dn,  $n
   lsr        r5, r3, #16
   add        r6, r1, r5, lsl #2
   add        r3, r3, r4
-  MEMACCESS  6
   vld1.32    {$dn[$n]}, [r6]
   MEND
-;************************
+; clang-format on
 
-;************************
 ScaleARGBCols_NEON PROC
   ; input
-  ;     r0 = uint8* dst_argb
-  ;     r1 = const uint8* src_argb
-  ;     r2 = int dst_width
-  ;     r3 = int x
-  push       {r4 - r6}
-  ldr        r4, [sp,#12]    ; int dx
-  mov        r6, r1
-  vpush      {q0, q1}
+  ;   r0 = uint8* dst_argb
+  ;   r1 = const uint8* src_argb
+  ;   r2 = int dst_width
+  ;   r3 = int x
+  ;   r4 = int dx
+  ;
+  ;   "+r"(dst_argb),     %0 r0
+  ;   "+r"(src_argb),     %1 r1
+  ;   "+r"(dst_width),    %2 r2
+  ;   "+r"(x),            %3 r3
+  ;   "+r"(dx),           %4 r4
+  ;   "=&r"(tmp),         %5 r5
+  ;   "+r"(src_tmp)       %6 r6
+
+  push       {r4-r6}
+  ldr        r4, [sp,#12]                     ; int dx
+  mov        r6, r1                           ; src_tmp = src_argb
+
+  vpush      {q0-q1}
 
 1
   LOAD1_DATA32_LANE d0, 0
@@ -1117,45 +1132,56 @@ ScaleARGBCols_NEON PROC
   LOAD1_DATA32_LANE d3, 0
   LOAD1_DATA32_LANE d3, 1
 
-  MEMACCESS	0
   vst1.32     {q0, q1}, [r0]!                 ; store pixels
-  subs       r2, r2, #8                       ; 8 processed per loop
+  subs       r2, r2, #8                       ; 8 processed per
+                                              ; loop
   bgt        %b1
 
+  vpop       {q0-q1}
+  pop        {r4-r6}
 
-  vpop       {q0, q1}
-  pop        {r4 - r6}
   bx         lr
   ENDP
-;************************
 
-;************************
-  ; TODO(Yang Zhang): Investigate less load instructions for
-  ; the x/dx stepping
-  MACRO
-  LOAD2_DATA32_LANE $dn1, $dn2,  $n
+; clang-format off
+; TODO(Yang Zhang): Investigate less load instructions for
+; the x/dx stepping
+MACRO
+  LOAD2_DATA32_LANE $dn1, $dn2, $n
   lsr        r5, r3, #16
   add        r6, r1, r5, lsl #2
   add        r3, r3, r4
   MEMACCESS  6
   vld2.32    {$dn1[$n], $dn2[$n]}, [r6]
   MEND
-;************************
+; clang-format on
 
-;************************
 ScaleARGBFilterCols_NEON PROC
   ; input
-  ;     r0 = uint8* dst_argb
-  ;     r1 = const uint8* src_argb
-  ;     r2 = int dst_width
-  ;     r3 = int x
+  ;   r0 = uint8* dst_argb
+  ;   r1 = const uint8* src_argb
+  ;   r2 = int dst_width
+  ;   r3 = int x
+  ;   r5 = int dx
+  ;
+  ;  "+r"(dst_argb),      %0 r0
+  ;  "+r"(src_argb),      %1 r1
+  ;  "+r"(dst_width),     %2 r2
+  ;  "+r"(x),             %3 r3
+  ;  "+r"(dx),            %4 r4
+  ;  "+r"(tmp),           %5 r5
+  ;  "+r"(src_tmp)        %6 r6
 
-  push       {r4 - r6}
-  ldr        r4, [sp,#12]    ;int dx
+  push       {r4-r6}
+  ldr        r4, [sp,#12]                     ; int dx
+
+  vpush      {q0-q3}
+  vpush      {q8-q15}
+  vpush      {d0-d3}
+  vpush      {d22-d27}
+
   adr        r5,  dx_offset
   mov        r6, r1
-  vpush      {q0 - q3}
-  vpush      {q8 - q15}
 
   vdup.32    q0, r3                           ; x
   vdup.32    q1, r4                           ; dx
@@ -1191,20 +1217,17 @@ ScaleARGBFilterCols_NEON PROC
   vshrn.i16   d0, q11, #7
   vshrn.i16   d1, q12, #7
 
-  MEMACCESS	  0
   vst1.32     {d0, d1}, [r0]!                 ; store pixels
   vadd.s32    q8, q8, q9
   subs        r2, r2, #4                      ; 4 processed per loop
   bgt         %b1
 
-  vpop       {q8 - q15}
-  vpop       {q0 - q3}
-  pop        {r4 - r6}
+  vpop       {d22-d27}
+  vpop       {d0-d3}
+  vpop       {q8-q15}
+  vpop       {q0-q3}
+  pop        {r4-r6}
+
   bx         lr
   ENDP
-
-  END
-;************************
-
-
 
