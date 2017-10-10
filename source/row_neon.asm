@@ -907,6 +907,129 @@ SetRow_NEON PROC
   bx         lr  
   ENDP
 
+; ARGBSetRow writes 'count' pixels using an 32 bit value repeated.
+ARGBSetRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* dst
+  ;   r1 = uint8* v32
+  ;   r2 = int count
+  ;
+  ;   "+r"(dst),          %0
+  ;   "+r"(count)         %1
+  ;   "r"(v32)            %2
+
+  vdup.u32  q0, r2                            ; duplicate 4 ints
+1
+  subs      r1, r1, #4                        ; 4 pixels per loop
+  vst1.8    {q0}, [r0]!                       ; store
+  bgt       %b1
+
+  bx        lr
+  ENDP
+
+MirrorRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src
+  ;   r1 = uint8* dst
+  ;   r2 = int width
+  ;
+  ;   "+r"(src),          %0
+  ;   "+r"(dst),          %1
+  ;   "+r"(width)         %2
+
+  ; Start at end of source row.
+  mov        r3, #-16
+  add        r0, r0, r2
+  sub        r0, #16
+
+1
+  vld1.8     {q0}, [r0], r3                   ; src -= 16
+  subs       r2, #16                          ; 16 pixels per loop.
+  vrev64.8   q0, q0
+  vst1.8     {d1}, [r1]!                      ; dst += 16
+  vst1.8     {d0}, [r1]!
+  bgt        %b1
+
+  bx        lr
+  ENDP
+
+MirrorUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_uv
+  ;   r1 = uint8* dst_u
+  ;   r2 = uint8* dst_
+  ;   r3 = uint8* width
+  ;
+  ;   "+r"(src_uv),       %0 r0
+  ;   "+r"(dst_u),        %1 r1
+  ;   "+r"(dst_v),        %2 r2
+  ;   "+r"(width)         %3 r3
+
+  push        {r12}
+
+  ; Start at end of source row.
+  mov        r12, #-16
+  add        r0, r0, r3, lsl #1
+  sub        r0, #16
+
+1
+  vld2.8     {d0, d1}, [r0], r12              ; src -= 16
+  subs       r3, #8                           ; 8 pixels per loop.
+  vrev64.8   q0, q0
+  vst1.8     {d0}, [r1]!                      ; dst += 8
+  vst1.8     {d1}, [r2]!
+  bgt        %b1
+
+  pop       {r12}
+  bx        lr
+  ENDP
+
+ARGBMirrorRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src
+  ;   r1 = uint8* dst
+  ;   r2 = int width
+  ;
+  ;   "+r"(src),          %0 r0
+  ;   "+r"(dst),          %1 r1
+  ;   "+r"(width)         %2 r2
+
+  ; Start at end of source row.
+  mov        r3, #-16
+  add        r0, r0, r2, lsl #2
+  sub        r0, #16
+
+1
+  vld1.8     {q0}, [r0], r3                   ; src -= 16
+  subs       r2, #4                           ; 4 pixels per loop.
+  vrev64.32  q0, q0
+  vst1.8     {d1}, [r1]!                      ; dst += 16
+  vst1.8     {d0}, [r1]!
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+RGB24ToARGBRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_rgb24
+  ;   r1 = uint8* dst_argb
+  ;   r2 = int pix
+  ;
+  ;   "+r"(src_rgb24),    %0 r0
+  ;   "+r"(dst_argb),     %1 r1
+  ;   "+r"(width)         %2 r2
+
+  vmov.u8    d4, #255                         ; Alpha
+1
+  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RGB24.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vst4.8     {d1, d2, d3, d4}, [r1]!          ; store 8 pixels of ARGB.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1199,143 +1322,6 @@ NV21ToRGB565Row_NEON PROC
   vpop      {q8 - q15}
   vpop      {q0 - q4}
   pop       {r5}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; ARGBSetRow writes 'count' pixels using an 32 bit value repeated.
-ARGBSetRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* dst
-  ;     r1 = uint8* v32
-  ;     r2 = int count
-  vpush     {q0}
-
-  vdup.u32  q0, r1                            ; duplicate 4 ints
-1
-  subs      r2, r2, #4                        ; 4 pixels per loop
-  MEMACCESS	0
-  vst1.8    {q0}, [r0]!                       ; store
-  bgt       %b1
-
-  vpop      {q0}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-MirrorRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src
-  ;     r1 = uint8* dst
-  ;     r2 = int width
-  push      {r3}
-  vpush     {q0}
-  ; Start at end of source row.
-  mov        r3, #-16
-  add        r0, r0, r2
-  sub        r0, #16
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0], r3                   ; src -= 16
-  subs       r2, #16                          ; 16 pixels per loop.
-  vrev64.8   q0, q0
-  MEMACCESS	1
-  vst1.8     {d1}, [r1]!                      ; dst += 16
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!
-  bgt        %b1
-
-  vpop      {q0}
-  pop       {r3}
-  bx        lr
-  ENDP
-;*************************************************
-
-
-;*************************************************
-MirrorUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_uv
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_
-  ;     r3 = uint8* width
-  push      {r12}
-  vpush     {q0}
-  ; Start at end of source row.
-  mov        r12, #-16
-  add        r0, r0, r3, lsl #1
-  sub        r0, #16
-
-1
-  MEMACCESS	0
-  vld2.8     {d0, d1}, [r0], r12              ; src -= 16
-  subs       r3, #8                           ; 8 pixels per loop.
-  vrev64.8   q0, q0
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; dst += 8
-  MEMACCESS	2
-  vst1.8     {d1}, [r2]!
-  bgt        %b1
-
-  vpop      {q0}
-  pop       {r12}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGBMirrorRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src
-  ;     r1 = uint8* dst
-  ;     r2 = int width
-  push      {r3}
-  vpush     {q0}
-
-  ; Start at end of source row.
-  mov        r3, #-16
-  add        r0, r0, r2, lsl #2
-  sub        r0, #16
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0], r3                   ; src -= 16
-  subs       r2, #4                           ; 4 pixels per loop.
-  vrev64.32  q0, q0
-  MEMACCESS	1
-  vst1.8     {d1}, [r1]!                      ; dst += 16
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!
-  bgt        %b1
-
-  vpop      {q0}
-  pop       {r3}
-  bx        lr
-  ENDP
-;*************************************************
-
-
-;*************************************************
-RGB24ToARGBRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_rgb24
-  ;     r1 = uint8* dst_argb
-  ;     r2 = int pix
-  vpush       {d1 - d4}
-  vmov.u8    d4, #255                         ; Alpha
-
-1
-  MEMACCESS	0
-  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RGB24.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  MEMACCESS	1
-  vst4.8     {d1, d2, d3, d4}, [r1]!          ; store 8 pixels of ARGB.
-  bgt        %b1
-
-  vpop      {d1 - d4}
   bx        lr
   ENDP
 ;*************************************************
