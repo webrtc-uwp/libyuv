@@ -1030,6 +1030,69 @@ RGB24ToARGBRow_NEON PROC
   bx         lr
   ENDP
 
+RAWToARGBRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_raw
+  ;   r1 = uint8* dst_argb
+  ;   r2 = int pix
+  ;
+  ;   "+r"(src_raw),      %0 r0
+  ;   "+r"(dst_argb),     %1 r1
+  ;   "+r"(width)         %2 r2
+
+  vmov.u8    d4, #255                         ; Alpha
+1
+  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RAW.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vswp.u8    d1, d3                           ; swap R, B
+  vst4.8     {d1, d2, d3, d4}, [r1]!          ; store 8 pixels of ARGB.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+RAWToRGB24Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_raw
+  ;   r1 = uint8* dst_rgb24
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_raw),      %0 r0
+  ;   "+r"(dst_rgb24),    %1 r1
+  ;   "+r"(width)         %2 r2
+
+1
+  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RAW.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vswp.u8    d1, d3                           ; swap R, B
+  vst3.8     {d1, d2, d3}, [r1]!              ; store 8 pixels of
+                                              ; RGB24.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+RGB565ToARGBRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_rgb565
+  ;   r1 = uint8* dst_argb
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_rgb565),   %0 r0
+  ;   "+r"(dst_argb),     %1 r1
+  ;   "+r"(width)         %2 r2
+
+  vmov.u8    d3, #255                         ; Alpha
+1
+  vld1.8     {q0}, [r0]!                      ; load 8 RGB565 pixels.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  RGB565TOARGB
+  vst4.8     {d0, d1, d2, d3}, [r1]!          ; store 8 pixels of ARGB.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1323,74 +1386,6 @@ NV21ToRGB565Row_NEON PROC
   vpop      {q0 - q4}
   pop       {r5}
   bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RAWToARGBRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_raw
-  ;     r1 = uint8* dst_argb
-  ;     r2 = int pix
-  vpush       {d1 - d4}
-  vmov.u8    d4, #255                         ; Alpha
-
-1
-  MEMACCESS	0
-  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RAW.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vswp.u8    d1, d3                           ; swap R, B
-  MEMACCESS	1
-  vst4.8     {d1, d2, d3, d4}, [r1]!          ; store 8 pixels of ARGB.
-  bgt        %b1
-
-  vpop      {d1 - d4}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RAWToRGB24Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_raw
-  ;     r1 = uint8* dst_rgb24
-  ;     r2 = int width
-  vpush       {d1 - d4}
-
-1
-  MEMACCESS 0
-  vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RAW.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vswp.u8    d1, d3                           ; swap R, B
-  MEMACCESS 1
-  vst3.8     {d1, d2, d3}, [r1]!              ; store 8 pixels of b g r.
-  bgt        %b1
-
-  vpop      {d1 - d4}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RGB565ToARGBRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_rgb565
-  ;     r1 = uint8* dst_argb
-  ;     r2 = int pix
-  vpush	     {q0 - q3}
-  vmov.u8    d3, #255                         ; Alpha
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0]!                      ; load 8 RGB565 pixels.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  RGB565TOARGB
-  MEMACCESS	1
-  vst4.8     {d0, d1, d2, d3}, [r1]!          ; store 8 pixels of ARGB.
-  bgt        %b1
-
-  vpop	     {q0 - q3}
-   bx        lr
   ENDP
 ;*************************************************
 
