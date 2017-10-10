@@ -1155,6 +1155,108 @@ ARGBToRGB24Row_NEON PROC
   bx         lr
   ENDP
 
+ARGBToRAWRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_argb
+  ;   r1 = uint8* dst_raw
+  ;   r2 = width
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(dst_raw),      %1 r1
+  ;   "+r"(width)         %2 r2
+
+1
+  vld4.8     {d1, d2, d3, d4}, [r0]!          ; load 8 pixels of ARGB.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vswp.u8    d1, d3                           ; swap R, B
+  vst3.8     {d1, d2, d3}, [r1]!              ; store 8 pixels of RAW.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+YUY2ToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_yuy2
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_yuy2),     %0 r0
+  ;   "+r"(dst_y),        %1 r1
+  ;   "+r"(width)         %2 r2
+
+1
+  vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of YUY2.
+  subs       r2, r2, #16                      ; 16 processed per loop.
+  vst1.8     {q0}, [r1]!                      ; store 16 pixels of Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+UYVYToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_uyvy
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_uyvy),     %0 r0
+  ;   "+r"(dst_y),        %1 r1
+  ;   "+r"(width)         %2 r2
+
+1
+  vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of UYVY.
+  subs       r2, r2, #16                      ; 16 processed per loop.
+  vst1.8     {q1}, [r1]!                      ; store 16 pixels of Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+YUY2ToUV422Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_yuy2
+  ;   r1 = uint8* dst_u
+  ;   r2 = uint8* dst_v
+  ;   r3 = int width
+  ;
+  ;   "+r"(src_yuy2),     %0 r0
+  ;   "+r"(dst_u),        %1 r1
+  ;   "+r"(dst_v),        %2 r2
+  ;   "+r"(width)         r3 r3
+
+1
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of YUY2.
+  subs       r3, r3, #16                      ; 16 pixels = 8 UVs.
+  vst1.8     {d1}, [r1]!                      ; store 8 U.
+  vst1.8     {d3}, [r2]!                      ; store 8 V.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+UYVYToUV422Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_uyvy
+  ;   r1 = uint8* dst_u
+  ;   r2 = uint8* dst_v
+  ;   r3 = int width
+  ;
+  ;   "+r"(src_uyvy),     %0 r0
+  ;   "+r"(dst_u),        %1 r1
+  ;   "+r"(dst_v),        %2 r2
+  ;   "+r"(width)         %3 r3
+
+1
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of UYVY.
+  subs       r3, r3, #16                      ; 16 pixels = 8 UVs.
+  vst1.8     {d0}, [r1]!                      ; store 8 U.
+  vst1.8     {d2}, [r2]!                      ; store 8 V.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1305,26 +1407,6 @@ I422ToARGB4444Row_NEON PROC
   bx        lr
   ENDP
 ;*************************************************
-
-ARGBToRAWRow_NEON PROC
-  ; input
-  ;   r0 = const uint8* src_argb
-  ;   r1 = uint8* dst_raw
-  ;   r2 = width
-  ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_raw),      %1 r1
-  ;   "+r"(width)         %2 r2
-
-1
-  vld4.8     {d1, d2, d3, d4}, [r0]!          ; load 8 pixels of ARGB.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vswp.u8    d1, d3                           ; swap R, B
-  vst3.8     {d1, d2, d3}, [r1]!              ; store 8 pixels of RAW.
-  bgt        %b1
-
-  bx         lr
-  ENDP
 
 ;*************************************************
 ARGBToRGB565Row_NEON PROC
@@ -2183,54 +2265,6 @@ ARGBToUV444Row_NEON PROC
 ;*************************************************
 
 ;*************************************************
-YUY2ToUV422Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_yuy2
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_v
-  ;     r3 = int pix
-  vpush	     {d0 - d3}
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of YUY2.
-  subs       r3, r3, #16                      ; 16 pixels = 8 UVs.
-  MEMACCESS	1
-  vst1.8     {d1}, [r1]!                      ; store 8 U.
-  MEMACCESS	2
-  vst1.8     {d3}, [r2]!                      ; store 8 V.
-  bgt        %b1
-
-  vpop	     {d0 - d3}
-  bx		  	 lr
-  ENDP
-;*************************************************
-
-;*************************************************
-UYVYToUV422Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_uyvy
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_v
-  ;     r3 = int pix
-  vpush	     {d0 - d3}
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of UYVY.
-  subs       r3, r3, #16                      ; 16 pixels = 8 UVs.
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 U.
-  MEMACCESS	2
-  vst1.8     {d2}, [r2]!                      ; store 8 V.
-  bgt        %b1
-
-  vpop	     {d0 - d3}
-  bx		  	 lr
-  ENDP
-;*************************************************
-
-;*************************************************
   ; Select G channels from ARGB.  e.g.  GGGGGGGG
 ARGBToBayerGGRow_NEON PROC
   ; input
@@ -2783,27 +2817,6 @@ UYVYToUVRow_NEON PROC
 ;*************************************************
 
 ;*************************************************
-UYVYToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_uyvy
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush		  {q0, q1}
-
-1
-  MEMACCESS	0
-  vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of UYVY.
-  subs       r2, r2, #16                      ; 16 processed per loop.
-  MEMACCESS	1
-  vst1.8     {q1}, [r1]!                      ; store 16 pixels of Y.
-  bgt        %b1
-
-  vpop		   {q0, q1}
-  bx		     lr
-  ENDP
-;*************************************************
-
-;*************************************************
 YUY2ToUVRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_yuy2
@@ -2836,26 +2849,6 @@ YUY2ToUVRow_NEON PROC
   ENDP
 ;*************************************************
 
-;*************************************************
-YUY2ToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_yuy2
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush     {q0, q1}
-
-1
-  MEMACCESS	0
-  vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of YUY2.
-  subs       r2, r2, #16                      ; 16 processed per loop.
-  MEMACCESS	1
-  vst1.8     {q0}, [r1]!                      ; store 16 pixels of Y.
-  bgt        %b1
-
-  vpop       {q0, q1}
-  bx         lr
-  ENDP
-;*************************************************
 
 ;*************************************************
 ARGBToRGB565DitherRow_NEON PROC
