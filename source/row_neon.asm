@@ -802,6 +802,74 @@ YUY2ToARGBRow_NEON PROC
   bx         lr
   ENDP
 
+UYVYToARGBRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_uyvy
+  ;   r1 = uint8* dst_argb
+  ;   r2 = const struct YuvConstants* yuvconstants
+  ;   r3 = width
+  ;
+  ;   "+r"(src_uyvy),     %0 r0
+  ;   "+r"(dst_argb),     %1 r1
+  ;   "+r"(width)         %2 r3
+
+  YUVTORGB_SETUP r2
+  vmov.u8    d23, #255
+1
+  READUYVY
+  YUVTORGB
+  subs       r3, r3, #8
+  vst4.8     {d20, d21, d22, d23}, [r1]!
+  bgt        %b1
+
+  bx        lr
+  ENDP
+
+; Reads 16 pairs of UV and write even values to dst_u and odd to dst_v.
+SplitUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_uv
+  ;   r1 = uint8* dst_u
+  ;   r2 = uint8* dst_v
+  ;   r3 = int width
+  ;
+  ;   "+r"(src_uv),       %0 r0
+  ;   "+r"(dst_u),        %1 r1
+  ;   "+r"(dst_v),        %2 r2
+  ;   "+r"(width)         %3 r3 // Output registers
+
+1
+  vld2.8     {q0, q1}, [r0]!                  ; load 16 pairs of UV
+  subs       r3, r3, #16                      ; 16 processed per loop
+  vst1.8     {q0}, [r1]!                      ; store U
+  vst1.8     {q1}, [r2]!                      ; store V
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+; Reads 16 U's and V's and writes out 16 pairs of UV.
+MergeUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_u
+  ;   r1 = uint8* src_v
+  ;   r2 = uint8* dst_uv
+  ;   r3 = int width
+  ;
+  ;   "+r"(src_u),        %0 r0
+  ;   "+r"(src_v),        %1 r1
+  ;   "+r"(dst_uv),       %2 r2
+  ;   "+r"(width)         %3 r3  // Output registers
+
+1
+  vld1.8     {q0}, [r0]!                      ; load U
+  vld1.8     {q1}, [r1]!                      ; load V
+  subs       r3, r3, #16                      ; 16 processed per loop
+  vst2.u8    {q0, q1}, [r2]!                  ; store 16 pairs of UV
+  bgt        %b1
+
+  bx         lr
+  ENDP
 
 ;*************************************************
 I411ToARGBRow_NEON PROC
@@ -1096,83 +1164,6 @@ NV21ToRGB565Row_NEON PROC
   vpop      {q0 - q4}
   pop       {r5}
   bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-UYVYToARGBRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_uyvy
-  ;     r1 = uint8* dst_argb
-  ;     r2 = width
-  push      {r5}
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
-
-  YUV422TORGB_SETUP_REG
-1
-  READUYVY
-  YUV422TORGB
-  subs       r2, r2, #8
-  vmov.u8    d23, #255
-  MEMACCESS	1
-  vst4.8     {d20, d21, d22, d23}, [r1]!
-  bgt        %b1
-
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r5}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; Reads 16 pairs of UV and write even values to dst_u and odd to dst_v.
-SplitUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_uv
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_v
-  ;     r3 = int width
-  vpush      {q0, q1}
-
-1
-  MEMACCESS	0
-  vld2.8     {q0, q1}, [r0]!                  ; load 16 pairs of UV
-  subs       r3, r3, #16                      ; 16 processed per loop
-  MEMACCESS	1
-  vst1.8     {q0}, [r1]!                      ; store U
-  MEMACCESS	2
-  vst1.8     {q1}, [r2]!                      ; store V
-  bgt        %b1
-
-  vpop       {q0, q1}
-  bx         lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; Reads 16 U's and V's and writes out 16 pairs of UV
-MergeUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_u
-  ;     r1 = uint8* src_v
-  ;     r2 = uint8* dst_uv
-  ;     r3 = int width
-  vpush      {q0, q1}
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0]!                      ; load U
-  MEMACCESS	1
-  vld1.8     {q1}, [r1]!                      ; load V
-  subs       r3, r3, #16                      ; 16 processed per loop
-  MEMACCESS	2
-  vst2.u8    {q0, q1}, [r2]!                  ; store 16 pairs of UV
-  bgt        %b1
-
-  vpop       {q0, q1}
-  bx         lr
   ENDP
 ;*************************************************
 
