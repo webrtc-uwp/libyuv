@@ -534,6 +534,75 @@ I422ToRGB565Row_NEON PROC
   bx        lr
   ENDP
 
+I422ToARGB1555Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_y
+  ;   r1 = const uint8* src_u
+  ;   r2 = const uint8* src_v
+  ;   r3 = uint8* dst_argb1555
+  ;   r4 = const struct YuvConstants* yuvconstants (ignored) [SP#0]
+  ;   r5 = int width [SP#4]
+  ;
+  ;   "+r"(src_y),        %0 r0
+  ;   "+r"(src_u),        %1 r1
+  ;   "+r"(src_v),        %2 r2
+  ;   "+r"(dst_argb1555), %3 r3
+  ;   "+r"(width)         %4 r5
+
+  push      {r4-r5}          ; SP moved 8
+  ldr       r5, [sp,#12]     ; int width
+
+  YUVTORGB_SETUP
+1
+  READYUV422
+  YUVTORGB
+  subs       r5, r5, #8
+  vmov.u8    d23, #255
+  ARGBTOARGB1555
+  vst1.8     {q0}, [r3]!                    ; store 8 pixels
+                                            ; ARGB1555.
+  bgt        %b1
+
+  pop       {r4-r5}
+
+  bx        lr
+  ENDP
+
+I422ToARGB4444Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_y
+  ;   r1 = const uint8* src_u
+  ;   r2 = const uint8* src_v
+  ;   r3 = uint8* dst_argb4444
+  ;   r4 = const struct YuvConstants* yuvconstants (ignored) [SP#0]
+  ;   r5 = int width [SP#4]
+  ;
+  ;   "+r"(src_y),        %0 r0
+  ;   "+r"(src_u),        %1 r1
+  ;   "+r"(src_v),        %2 r2
+  ;   "+r"(dst_argb4444), %3 r3
+  ;   "+r"(width)         %4 r5
+
+  push       {r4-r5}
+  ldr        r5, [sp,#12]     ; int width
+
+  YUVTORGB_SETUP
+  vmov.u8    d4, #0x0f                        ; bits to clear with
+                                              ; vbic.
+1
+  READYUV422
+  YUVTORGB
+  subs       r5, r5, #8
+  vmov.u8    d23, #255
+  ARGBTOARGB4444
+  vst1.8     {q0}, [r3]!                      ; store 8 pixels
+                                              ; ARGB4444.
+  bgt        %b1
+
+  pop        {r4-r5}
+
+  bx         lr
+  ENDP
 
 ;*************************************************
 I411ToARGBRow_NEON PROC
@@ -677,36 +746,6 @@ I422ToARGB4444Row_NEON PROC
   ARGBTOARGB4444
   MEMACCESS  3
   vst1.8     {q0}, [r3]!                      ; store 8 pixels ARGB4444.
-  bgt        %b1
-
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r4, r5}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-I422ToARGB1555Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb1555
-  push      {r4, r5}
-  ldr       r4, [sp,#8]      ; int width
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
-
-  YUV422TORGB_SETUP_REG
-1
-  READYUV422
-  YUV422TORGB
-  subs       r4, r4, #8
-  vmov.u8    d23, #255
-  ARGBTOARGB1555
-  MEMACCESS  3
-  vst1.8     {q0}, [r3]!                    ; store 8 pixels ARGB1555.
   bgt        %b1
 
   vpop      {q8 - q15}
