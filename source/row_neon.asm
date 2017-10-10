@@ -350,8 +350,8 @@ I444ToARGBRow_NEON PROC
   ;   "+r"(dst_argb),  // %3 r3
   ;   "+r"(width)      // %4 r5
 
-  push      {r5}
-  ldr       r5, [sp,#8]      ; int width
+  push      {r4-r5}
+  ldr       r5, [sp,#12]      ; int width
 
   vpush     {q4}
 
@@ -366,7 +366,7 @@ I444ToARGBRow_NEON PROC
   bgt        %b1
 
   vpop      {q4}
-  pop       {r5}
+  pop       {r4-r5}
 
   bx        lr
   ENDP
@@ -377,8 +377,8 @@ I422ToARGBRow_NEON PROC
   ;   r1 = const uint8* src_u
   ;   r2 = const uint8* src_v
   ;   r3 = uint8* dst_argb
-  ;   r4 = const struct YuvConstants* yuvconstants (ignored)
-  ;   r5 = int width
+  ;   r4 = const struct YuvConstants* yuvconstants (ignored) [SP#0]
+  ;   r5 = int width [SP#4]
   ;
   ;  "+r"(src_y),         %0 r0
   ;  "+r"(src_u),         %1 r1
@@ -386,8 +386,8 @@ I422ToARGBRow_NEON PROC
   ;  "+r"(dst_argb),      %3 r3
   ;  "+r"(width)          %4 r5
 
-  push      {r4}
-  ldr       r4, [sp,#8]      ; int width
+  push      {r4-r5}           ; SP moved 8
+  ldr       r5, [sp,#12]      ; int width
 
   YUVTORGB_SETUP
   vmov.u8    d23, #255
@@ -398,71 +398,78 @@ I422ToARGBRow_NEON PROC
   vst4.8     {d20, d21, d22, d23}, [r3]!
   bgt        %b1
 
-  pop       {r4}
+  pop       {r4-r5}
 
   bx        lr
   ENDP
 
-;*************************************************
 I422AlphaToARGBRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 = const uint8* src_a
-  ;     r4 =  uint8* dst_argb
-  push      {r5, r6}
-  ldr       r5, [sp,#8]      ; int width
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
+  ;   r0 = const uint8* src_y
+  ;   r1 = const uint8* src_u
+  ;   r2 = const uint8* src_v
+  ;   r3 = const uint8* src_a
+  ;   r4 = uint8* dst_argb [SP#0]
+  ;   r5 = const struct YuvConstants* yuvconstants (ignored) [SP#4]
+  ;   r6 = width [SP#8]
+  ;
+  ;   "+r"(src_y),        %0 r0
+  ;   "+r"(src_u),        %1 r1
+  ;   "+r"(src_v),        %2 r2
+  ;   "+r"(src_a),        %3 r3
+  ;   "+r"(dst_argb),     %4 r4
+  ;   "+r"(width)         %5 r6
 
-  YUV422TORGB_SETUP_REG
+  push      {r4-r6}           ; SP moved 12
+  ldr       r4, [sp,#12]      ; uint8* dst_argb
+  ldr       r6, [sp,#20]      ; int width
+
+  YUVTORGB_SETUP
 1
   READYUV422
-  YUV422TORGB
-  MEMACCESS  3
+  YUVTORGB
+  subs       r6, r6, #8
   vld1.8     {d23}, [r3]!
-  subs       r5, r5, #8
-  MEMACCESS  4
   vst4.8     {d20, d21, d22, d23}, [r4]!
   bgt        %b1
 
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r5, r6}
+  pop       {r4-r6}
+
   bx        lr
   ENDP
-;*************************************************
 
-;*************************************************
 I422ToRGBARow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb
-  push      {r4, r5}
-  ldr       r4, [sp,#8]      ; int width
-  vpush     {q0 - q4}
-  vpush     {q8 - q15}
+  ;   r0 = const uint8* src_y
+  ;   r1 = const uint8* src_u
+  ;   r2 = const uint8* src_v
+  ;   r3 =  uint8* dst_rgba
+  ;   r4 =  const struct YuvConstants* yuvconstants (ignored) [SP#0]
+  ;   r5 =  int width [SP#4]
+  ;
+  ;   "+r"(src_y),        %0 r0
+  ;   "+r"(src_u),        %1 r1
+  ;   "+r"(src_v),        %2 r2
+  ;   "+r"(dst_rgba),     %3 r3
+  ;   "+r"(width)         %4 r5
 
-  YUV422TORGB_SETUP_REG
+  push      {r4-r5}          ; SP moved 8
+  ldr       r5, [sp,#12]     ; int width
+
+  YUVTORGB_SETUP
 1
   READYUV422
-  YUV422TORGB
-  subs       r4, r4, #8
-  vmov.u8    d19, #255
-  MEMACCESS  3
+  YUVTORGB
+  subs       r5, r5, #8
+  vmov.u8    d19, #255                      ; d19 modified by
+                                            ; YUVTORGB
   vst4.8     {d19, d20, d21, d22}, [r3]!
   bgt        %b1
 
-  vpop      {q8 - q15}
-  vpop      {q0 - q4}
-  pop       {r4, r5}
+  pop       {r4-r5}
+
   bx        lr
   ENDP
-;*************************************************
-
 
 ;*************************************************
 I411ToARGBRow_NEON PROC

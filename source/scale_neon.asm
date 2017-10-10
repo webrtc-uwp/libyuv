@@ -725,7 +725,6 @@ ScaleFilterRows_NEON PROC
   ;  "+r"(dst_width),         %3 r3
   ;  "+r"(source_y_fraction)  %4 r4
 
-
   push         {r5}
   ldr          r4, [sp, #4]                    ; int source_y_fraction
 
@@ -908,8 +907,8 @@ ScaleARGBRowDownEven_NEON PROC
   ;   r0 = uint8* src_argb
   ;   r1 = ptrdiff_t src_stride
   ;   r2 = int src_stepx
-  ;   r3 =  uint8* dst_argb
-  ;   r4 =  uint8* dst_width
+  ;   r3 = uint8* dst_argb
+  ;   r4 = uint8* dst_width
   ;
   ;   "+r"(src_argb),     %0 r0
   ;   "+r"(dst_argb),     %1 r3
@@ -942,7 +941,8 @@ ScaleARGBRowDownEvenBox_NEON PROC
   ;   r0 = uint8* src_argb
   ;   r1 = ptrdiff_t src_stride
   ;   r2 = int src_stepx
-  ;   r3 =  uint8* dst_argb
+  ;   r3 = uint8* dst_argb
+  ;   r4 = int dst_width
   ;
   ;   "+r"(src_argb),     %0 r0
   ;   "+r"(src_stride),   %1 r1
@@ -1053,7 +1053,7 @@ ScaleARGBFilterCols_NEON PROC
   ;   r1 = const uint8* src_argb
   ;   r2 = int dst_width
   ;   r3 = int x
-  ;   r5 = int dx
+  ;   r4 = int dx
   ;
   ;  "+r"(dst_argb),      %0 r0
   ;  "+r"(src_argb),      %1 r1
