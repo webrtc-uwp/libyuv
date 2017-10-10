@@ -871,6 +871,42 @@ MergeUVRow_NEON PROC
   bx         lr
   ENDP
 
+; Copy multiple of 32.  vld4.8  allow unaligned and is fastest on a15.
+CopyRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src
+  ;   r1 = uint8* dst
+  ;   r2 = int count
+
+1
+  vld1.8     {d0, d1, d2, d3}, [r0]!          ; load 32
+  subs       r2, r2, #32                      ; 32 processed per loop
+  vst1.8     {d0, d1, d2, d3}, [r1]!          ; store 32
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+; SetRow writes 'count' bytes using an 8 bit value repeated.
+SetRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* dst
+  ;   r1 = uint8* v8
+  ;   r2 = int count
+  ;
+  ;   "+r"(dst),          %0
+  ;   "+r"(count)         %1
+  ;   "r"(v8)             %2
+
+  vdup.8    q0, r2                            ; duplicate 16 bytes
+1
+  subs      r1, r1, #16                       ; 16 bytes per loop
+  vst1.8    {q0}, [r0]!                       ; store
+  bgt       %b1
+
+  bx         lr  
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1163,49 +1199,6 @@ NV21ToRGB565Row_NEON PROC
   vpop      {q8 - q15}
   vpop      {q0 - q4}
   pop       {r5}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; Copy multiple of 32.  vld4.8  allow unaligned and is fastest on a15.
-CopyRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src
-  ;     r1 = uint8* dst
-  ;     r2 = int count
-  vpush      {q0, q1}
-
-1
-  MEMACCESS	0
-  vld1.8     {d0, d1, d2, d3}, [r0]!          ; load 32
-  subs       r2, r2, #32                      ; 32 processed per loop
-  MEMACCESS	1
-  vst1.8     {d0, d1, d2, d3}, [r1]!          ; store 32
-  bgt        %b1
-
-  vpop       {q0, q1}
-  bx         lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; SetRow writes 'count' bytes using an 8 bit value repeated
-SetRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src
-  ;     r1 = uint8* v8
-  ;     r2 = int count
-  vpush     {q0}
-
-  vdup.8    q0, r1                            ; duplicate 16 bytes
-1
-  subs      r2, r2, #16                       ; 16 bytes per loop
-  MEMACCESS	0
-  vst1.8    {q0}, [r0]!                       ; store
-  bgt       %b1
-
-  vpop      {q0}
   bx        lr
   ENDP
 ;*************************************************
