@@ -2176,6 +2176,121 @@ ARGB4444ToUVRow_NEON PROC
   bx        lr
   ENDP
 
+RGB565ToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_rgb565
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_rgb565),   %0
+  ;   "+r"(dst_y),        %1
+  ;   "+r"(width)         %2
+
+  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
+  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
+  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
+  vmov.u8    d27, #16                         ; Add 16 constant
+1
+  vld1.8     {q0}, [r0]!                      ; load 8 RGB565 pixels.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  RGB565TOARGB
+  vmull.u8   q2, d0, d24                      ; B
+  vmlal.u8   q2, d1, d25                      ; G
+  vmlal.u8   q2, d2, d26                      ; R
+  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d27
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+ARGB1555ToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_argb1555
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_argb1555), %0
+  ;   "+r"(dst_y),        %1
+  ;   "+r"(width)         %2
+
+  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
+  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
+  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
+  vmov.u8    d27, #16                         ; Add 16 constant
+1
+  vld1.8     {q0}, [r0]!                      ; load 8 ARGB1555 pixels.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  ARGB1555TOARGB
+  vmull.u8   q2, d0, d24                      ; B
+  vmlal.u8   q2, d1, d25                      ; G
+  vmlal.u8   q2, d2, d26                      ; R
+  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d27
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx        lr
+  ENDP
+
+ARGB4444ToYRow_NEON PROC
+  ; input
+  ;     r0 = const uint8* src_argb4444
+  ;     r1 = uint8* dst_y
+  ;     r2 = int width
+  ;
+  ;    "+r"(src_argb4444),  %0 r0
+  ;    "+r"(dst_y),         %1 r1
+  ;    "+r"(width)          %2 r2
+
+  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
+  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
+  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
+  vmov.u8    d27, #16                         ; Add 16 constant
+1
+  vld1.8     {q0}, [r0]!                      ; load 8 ARGB4444 pixels.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  ARGB4444TOARGB
+  vmull.u8   q2, d0, d24                      ; B
+  vmlal.u8   q2, d1, d25                      ; G
+  vmlal.u8   q2, d2, d26                      ; R
+  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d27
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+BGRAToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_bgra
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_bgra),     %0 r0
+  ;   "+r"(dst_y),        %1 r1
+  ;   "+r"(width)         %2 r2
+
+  vmov.u8    d4, #33                          ; R * 0.2578 coefficient
+  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
+  vmov.u8    d6, #13                          ; B * 0.1016 coefficient
+  vmov.u8    d7, #16                          ; Add 16 constant
+1
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of BGRA.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vmull.u8   q8, d1, d4                       ; R
+  vmlal.u8   q8, d2, d5                       ; G
+  vmlal.u8   q8, d3, d6                       ; B
+  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d7
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -2452,141 +2567,6 @@ RGB24ToYRow_NEON PROC
   vpop	     {q8}
   vpop	     {d0 - d7}
   bx		     lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RGB565ToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_rgb565
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	     {q0 - q3}
-  vpush 	   {q12 - q13}
-
-  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
-  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
-  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
-  vmov.u8    d27, #16                         ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0]!                      ; load 8 RGB565 pixels.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  RGB565TOARGB
-  vmull.u8   q2, d0, d24                      ; B
-  vmlal.u8   q2, d1, d25                      ; G
-  vmlal.u8   q2, d2, d26                      ; R
-  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d27
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop  		{q12 - q13}
-  vpop	    {q0 - q3}
-  bx		  	lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGB1555ToYRow_NEON PROC
-   ; input
-  ;     r0 = const uint8* src_argb1555
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	     {q0 - q3}
-  vpush	     {q12 - q13}
-
-  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
-  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
-  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
-  vmov.u8    d27, #16                         ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0]!                      ; load 8 ARGB1555 pixels.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  ARGB1555TOARGB
-  vmull.u8   q2, d0, d24                      ; B
-  vmlal.u8   q2, d1, d25                      ; G
-  vmlal.u8   q2, d2, d26                      ; R
-  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d27
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop		  {q12 - q13}
-  vpop	  	{q0 - q3}
-  bx		  	lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGB4444ToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_argb4444
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	     {q0 - q3}
-  vpush	     {q12 - q13}
-
-  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
-  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
-  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
-  vmov.u8    d27, #16                         ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld1.8     {q0}, [r0]!                      ; load 8 ARGB4444 pixels.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  ARGB4444TOARGB
-  vmull.u8   q2, d0, d24                      ; B
-  vmlal.u8   q2, d1, d25                      ; G
-  vmlal.u8   q2, d2, d26                      ; R
-  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d27
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop		  {q12 - q13}
-  vpop	  	{q0 - q3}
-  bx		  	lr
-  ENDP
-;*************************************************
-
-;*************************************************
-BGRAToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_bgra
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	    {q0 - q3}
-  vpush	    {q12 - q13}
-
-  vmov.u8    d4, #33                          ; R * 0.2578 coefficient
-  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
-  vmov.u8    d6, #13                          ; B * 0.1016 coefficient
-  vmov.u8    d7, #16                          ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of BGRA.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vmull.u8   q8, d1, d4                       ; R
-  vmlal.u8   q8, d2, d5                       ; G
-  vmlal.u8   q8, d3, d6                       ; B
-  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d7
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop		  {q12 - q13}
-  vpop		  {q0 - q3}
-  bx			  lr
   ENDP
 ;*************************************************
 
