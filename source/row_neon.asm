@@ -1659,6 +1659,207 @@ ARGBToUVRow_NEON PROC
   bx          lr
   ENDP
 
+; TODO(fbarchard): Subsample match C code.
+ARGBToUVJRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_argb
+  ;   r1 = int src_stride_argb
+  ;   r2 = uint8* dst_u
+  ;   r3 = uint8* dst_v
+  ;   r4 = int width [SP#0]
+  ;
+  ;   "+r"(src_argb),         %0 r0
+  ;   "+r"(src_stride_argb),  %1 r1
+  ;   "+r"(dst_u),            %2 r2
+  ;   "+r"(dst_v),            %3 r3
+  ;   "+r"(width)             %4 r4
+
+  push       {r4}
+  ldr        r4, [sp,#4]                      ; int width
+
+  add        r1, r0, r1                       ; src_stride + src_argb
+  vmov.s16   q10, #127 / 2                    ; UB / VR 0.500 coefficient
+  vmov.s16   q11, #84 / 2                     ; UG -0.33126 coefficient
+  vmov.s16   q12, #43 / 2                     ; UR -0.16874 coefficient
+  vmov.s16   q13, #20 / 2                     ; VB -0.08131 coefficient
+  vmov.s16   q14, #107 / 2                    ; VG -0.41869 coefficient
+  vmov.u16   q15, #0x8080                     ; 128.5
+1
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels.
+  vpaddl.u8  q0, q0                           ; B 16 bytes -> 8 shorts.
+  vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
+  vpaddl.u8  q2, q2                           ; R 16 bytes -> 8 shorts.
+  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more ARGB pixels.
+  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 ARGB pixels.
+  vpadal.u8  q0, q4                           ; B 16 bytes -> 8 shorts.
+  vpadal.u8  q1, q5                           ; G 16 bytes -> 8 shorts.
+  vpadal.u8  q2, q6                           ; R 16 bytes -> 8 shorts.
+
+  vrshr.u16  q0, q0, #1                       ; 2x average
+  vrshr.u16  q1, q1, #1
+  vrshr.u16  q2, q2, #1
+
+  subs       r4, r4, #16                      ; 32 processed per loop.
+  RGBTOUV    q0, q1, q2
+  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
+  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
+  bgt        %b1
+
+  pop        {r4}
+  bx         lr
+  ENDP
+
+BGRAToUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_bgra
+  ;   r1 = int src_stride_bgra
+  ;   r2 = uint8* dst_u
+  ;   r3 = uint8* dst_v
+  ;   r4 = int width
+  ;
+  ;   "+r"(src_bgra),         %0 r0
+  ;   "+r"(src_stride_bgra),  %1 r1
+  ;   "+r"(dst_u),            %2 r2
+  ;   "+r"(dst_v),            %3 r3
+  ;   "+r"(width)             %4 r4
+
+  push      {r4}
+  ldr        r4, [sp,#4]                      ; int width
+
+  add        r1, r0, r1                       ; src_stride + src_bgra
+  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
+  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
+  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
+  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
+  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
+  vmov.u16   q15, #0x8080                     ; 128.5
+1
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 BGRA pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 BGRA pixels.
+  vpaddl.u8  q3, q3                           ; B 16 bytes -> 8 shorts.
+  vpaddl.u8  q2, q2                           ; G 16 bytes -> 8 shorts.
+  vpaddl.u8  q1, q1                           ; R 16 bytes -> 8 shorts.
+  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more BGRA pixels.
+  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 BGRA pixels.
+  vpadal.u8  q3, q7                           ; B 16 bytes -> 8 shorts.
+  vpadal.u8  q2, q6                           ; G 16 bytes -> 8 shorts.
+  vpadal.u8  q1, q5                           ; R 16 bytes -> 8 shorts.
+
+  vrshr.u16  q1, q1, #1                       ; 2x average
+  vrshr.u16  q2, q2, #1
+  vrshr.u16  q3, q3, #1
+
+  subs       r4, r4, #16                      ; 32 processed per loop.
+  RGBTOUV    q3, q2, q1
+  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
+  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
+  bgt        %b1
+
+  pop       {r4}
+  bx        lr
+  ENDP
+
+ABGRToUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_abgr
+  ;   r1 = uint8* src_stride_abgr
+  ;   r2 = uint8* dst_u
+  ;   r3 = uint8* dst_v
+  ;   r4 = int width [SP#4]
+  ;
+  ;   "+r"(src_abgr),         %0
+  ;   "+r"(src_stride_abgr),  %1
+  ;   "+r"(dst_u),            %2
+  ;   "+r"(dst_v),            %3
+  ;   "+r"(width)             %4
+
+  push       {r4}
+  ldr        r4, [sp,#4]                      ; int witdh
+
+  add        r1, r0, r1                       ; src_stride + src_abgr
+  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
+  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
+  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
+  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
+  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
+  vmov.u16   q15, #0x8080                     ; 128.5
+1
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ABGR pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ABGR pixels.
+  vpaddl.u8  q2, q2                           ; B 16 bytes -> 8 shorts.
+  vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
+  vpaddl.u8  q0, q0                           ; R 16 bytes -> 8 shorts.
+  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more ABGR pixels.
+  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 ABGR pixels.
+  vpadal.u8  q2, q6                           ; B 16 bytes -> 8 shorts.
+  vpadal.u8  q1, q5                           ; G 16 bytes -> 8 shorts.
+  vpadal.u8  q0, q4                           ; R 16 bytes -> 8 shorts.
+
+  vrshr.u16  q0, q0, #1                       ; 2x average
+  vrshr.u16  q1, q1, #1
+  vrshr.u16  q2, q2, #1
+
+  subs       r4, r4, #16                      ; 32 processed per loop.
+  RGBTOUV    q2, q1, q0
+  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
+  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
+  bgt        %b1
+
+  pop        {r4}
+  bx         lr
+  ENDP
+
+RGBAToUVRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_rgba
+  ;   r1 = uint8* src_stride_rgba
+  ;   r2 = uint8* dst_u
+  ;   r3 = uint8* dst_v
+  ;   r4 = int width [SP#0]
+  ;
+  ;   "+r"(src_rgba),         %0
+  ;   "+r"(src_stride_rgba),  %1
+  ;   "+r"(dst_u),            %2
+  ;   "+r"(dst_v),            %3
+  ;   "+r"(width)             %4
+
+  push       {r4}
+  ldr        r4, [sp,#4]                      ; int width
+
+  add        r1, r0, r1                       ; src_stride + src_rgba
+  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
+  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
+  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
+  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
+  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
+  vmov.u16   q15, #0x8080                     ; 128.5
+1
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 RGBA pixels.
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 RGBA pixels.
+  vpaddl.u8  q0, q1                           ; B 16 bytes -> 8 shorts.
+  vpaddl.u8  q1, q2                           ; G 16 bytes -> 8 shorts.
+  vpaddl.u8  q2, q3                           ; R 16 bytes -> 8 shorts.
+  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more RGBA pixels.
+  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 RGBA pixels.
+  vpadal.u8  q0, q5                           ; B 16 bytes -> 8 shorts.
+  vpadal.u8  q1, q6                           ; G 16 bytes -> 8 shorts.
+  vpadal.u8  q2, q7                           ; R 16 bytes -> 8 shorts.
+
+  vrshr.u16  q0, q0, #1                       ; 2x average
+  vrshr.u16  q1, q1, #1
+  vrshr.u16  q2, q2, #1
+
+  subs       r4, r4, #16                      ; 32 processed per loop.
+  RGBTOUV     q0, q1, q2
+  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
+  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
+  bgt        %b1
+
+  pop        {r4}
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1836,120 +2037,6 @@ NV21ToRGB565Row_NEON PROC
   vpop      {q0 - q4}
   pop       {r5}
   bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ABGRToUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_abgr
-  ;     r1 = uint8* src_stride_abgr
-  ;     r2 = uint8* dst_u
-  ;     r3 = uint8* dst_v
-  push       {r4}
-  ldr        r4, [sp,#4]                      ; int witdh
-  vpush      {q0 - q7}
-  vpush      {q7 - q14}
-  vpush      {q15}
-
-  add        r1, r0, r1                       ; src_stride + src_abgr
-  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
-  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
-  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
-  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
-  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
-  vmov.u16   q15, #0x8080                     ; 128.5
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ABGR pixels.
-  MEMACCESS	0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ABGR pixels.
-  vpaddl.u8  q2, q2                           ; B 16 bytes -> 8 shorts.
-  vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
-  vpaddl.u8  q0, q0                           ; R 16 bytes -> 8 shorts.
-  MEMACCESS	1
-  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more ABGR pixels.
-  MEMACCESS	1
-  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 ABGR pixels.
-  vpadal.u8  q2, q6                           ; B 16 bytes -> 8 shorts.
-  vpadal.u8  q1, q5                           ; G 16 bytes -> 8 shorts.
-  vpadal.u8  q0, q4                           ; R 16 bytes -> 8 shorts.
-
-  vrshr.u16  q0, q0, #1                       ; 2x average
-  vrshr.u16  q1, q1, #1
-  vrshr.u16  q2, q2, #1
-
-  subs       r4, r4, #16                      ; 32 processed per loop.
-  RGBTOUV    q2, q1, q0
-  MEMACCESS	2
-  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
-  MEMACCESS	3
-  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
-  bgt        %b1
-
-  vpop       {q15}
-  vpop       {q7 - q14}
-  vpop       {q0 - q7}
-  pop        {r4}
-  bx         lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RGBAToUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_rgba
-  ;     r1 = uint8* src_stride_rgba
-  ;     r2 = uint8* dst_u
-  ;     r3 = uint8* dst_v
-  push       {r4}
-  ldr        r4, [sp,#4]                      ; int pix
-  vpush      {q0 - q7}
-  vpush      {q7 - q14}
-  vpush      {q15}
-
-  add        r1, r0, r1                       ; src_stride + src_rgba
-  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
-  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
-  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
-  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
-  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
-  vmov.u16   q15, #0x8080                     ; 128.5
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 RGBA pixels.
-  MEMACCESS	0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 RGBA pixels.
-  vpaddl.u8  q0, q1                           ; B 16 bytes -> 8 shorts.
-  vpaddl.u8  q1, q2                           ; G 16 bytes -> 8 shorts.
-  vpaddl.u8  q2, q3                           ; R 16 bytes -> 8 shorts.
-  MEMACCESS	1
-  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more RGBA pixels.
-  MEMACCESS	1
-  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 RGBA pixels.
-  vpadal.u8  q0, q5                           ; B 16 bytes -> 8 shorts.
-  vpadal.u8  q1, q6                           ; G 16 bytes -> 8 shorts.
-  vpadal.u8  q2, q7                           ; R 16 bytes -> 8 shorts.
-
-  vrshr.u16  q0, q0, #1                       ; 2x average
-  vrshr.u16  q1, q1, #1
-  vrshr.u16  q2, q2, #1
-
-  subs       r4, r4, #16                      ; 32 processed per loop.
-  RGBTOUV    q0, q1, q2
-  MEMACCESS	2
-  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
-  MEMACCESS	3
-  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
-  bgt        %b1
-
-  vpop       {q15}
-  vpop       {q7 - q14}
-  vpop       {q0 - q7}
-  pop        {r4}
-  bx         lr
   ENDP
 ;*************************************************
 
@@ -2566,122 +2653,6 @@ ARGBToBayerGGRow_NEON PROC
 
   vpop		{q0, q1}
   bx			lr
-  ENDP
-;*************************************************
-
-;*************************************************
-  ; TODO(fbarchard): Subsample match C code.
-ARGBToUVJRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = int src_stride_argb
-  ;     r2 = uint8* dst_u
-  ;     r3 = uint8* dst_v
-  push       {r4}
-  ldr        r4, [sp,#4]                      ; int pix
-  vpush	     {q0 - q7}
-  vpush 	   {q8 - q14}
-  vpush	     {q15}
-
-  add        r1, r0, r1                       ; src_stride + src_argb
-  vmov.s16   q10, #127 / 2                    ; UB / VR 0.500 coefficient
-  vmov.s16   q11, #84 / 2                     ; UG -0.33126 coefficient
-  vmov.s16   q12, #43 / 2                     ; UR -0.16874 coefficient
-  vmov.s16   q13, #20 / 2                     ; VB -0.08131 coefficient
-  vmov.s16   q14, #107 / 2                    ; VG -0.41869 coefficient
-  vmov.u16   q15, #0x8080                     ; 128.5
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels.
-  MEMACCESS	0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels.
-  vpaddl.u8  q0, q0                           ; B 16 bytes -> 8 shorts.
-  vpaddl.u8  q1, q1                           ; G 16 bytes -> 8 shorts.
-  vpaddl.u8  q2, q2                           ; R 16 bytes -> 8 shorts.
-  MEMACCESS	1
-  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more ARGB pixels.
-  MEMACCESS	1
-  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 ARGB pixels.
-  vpadal.u8  q0, q4                           ; B 16 bytes -> 8 shorts.
-  vpadal.u8  q1, q5                           ; G 16 bytes -> 8 shorts.
-  vpadal.u8  q2, q6                           ; R 16 bytes -> 8 shorts.
-
-  vrshr.u16  q0, q0, #1                       ; 2x average
-  vrshr.u16  q1, q1, #1
-  vrshr.u16  q2, q2, #1
-
-  subs       r4, r4, #16                      ; 32 processed per loop.
-  RGBTOUV    q0, q1, q2
-  MEMACCESS	2
-  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
-  MEMACCESS	3
-  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
-  bgt        %b1
-
-  vpop		  {q15}
-  vpop		  {q8 - q14}
-  vpop	    {q0 - q7}
-  pop		  	{r4}
-  bx		  	lr
-  ENDP
-;*************************************************
-
-
-;*************************************************
-BGRAToUVRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_bgra
-  ;     r1 = int src_stride_bgra
-  ;     r2 = uint8* dst_u
-  ;     r3 = uint8* dst_v
-  push       {r4}
-  ldr        r4, [sp,#4]                      ; int pix
-  vpush	     {q0 - q7}
-  vpush 	   {q8 - q14}
-  vpush	     {q15}
-
-  add        r1, r0, r1                       ; src_stride + src_bgra
-  vmov.s16   q10, #112 / 2                    ; UB / VR 0.875 coefficient
-  vmov.s16   q11, #74 / 2                     ; UG -0.5781 coefficient
-  vmov.s16   q12, #38 / 2                     ; UR -0.2969 coefficient
-  vmov.s16   q13, #18 / 2                     ; VB -0.1406 coefficient
-  vmov.s16   q14, #94 / 2                     ; VG -0.7344 coefficient
-  vmov.u16   q15, #0x8080                     ; 128.5
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 BGRA pixels.
-  MEMACCESS	0
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 BGRA pixels.
-  vpaddl.u8  q3, q3                           ; B 16 bytes -> 8 shorts.
-  vpaddl.u8  q2, q2                           ; G 16 bytes -> 8 shorts.
-  vpaddl.u8  q1, q1                           ; R 16 bytes -> 8 shorts.
-  MEMACCESS	1
-  vld4.8     {d8, d10, d12, d14}, [r1]!       ; load 8 more BGRA pixels.
-  MEMACCESS	1
-  vld4.8     {d9, d11, d13, d15}, [r1]!       ; load last 8 BGRA pixels.
-  vpadal.u8  q3, q7                           ; B 16 bytes -> 8 shorts.
-  vpadal.u8  q2, q6                           ; G 16 bytes -> 8 shorts.
-  vpadal.u8  q1, q5                           ; R 16 bytes -> 8 shorts.
-
-  vrshr.u16  q1, q1, #1                       ; 2x average
-  vrshr.u16  q2, q2, #1
-  vrshr.u16  q3, q3, #1
-
-  subs       r4, r4, #16                      ; 32 processed per loop.
-  RGBTOUV    q3, q2, q1
-  MEMACCESS	2
-  vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
-  MEMACCESS	3
-  vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
-  bgt        %b1
-
-  vpop		  {q15}
-  vpop		  {q8 - q14}
-  vpop	    {q0 - q7}
-  pop		  	{r4}
-  bx		  	lr
   ENDP
 ;*************************************************
 
