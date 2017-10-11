@@ -898,13 +898,16 @@ SetRow_NEON PROC
   ;   +r(count)         %1
   ;   r(v8)             %2
 
+  push      {r2}
+
   vdup.8    q0, r2                            ; duplicate 16 bytes
 1
   subs      r1, r1, #16                       ; 16 bytes per loop
   vst1.8    {q0}, [r0]!                       ; store
   bgt       %b1
 
-  bx         lr  
+  pop       {r2}
+  bx        lr  
   ENDP
 
 ; ARGBSetRow writes 'count' pixels using an 32 bit value repeated.
@@ -918,12 +921,15 @@ ARGBSetRow_NEON PROC
   ;   +r(count)         %1
   ;   r(v32)            %2
 
+  push      {r2}
+
   vdup.u32  q0, r2                            ; duplicate 4 ints
 1
   subs      r1, r1, #4                        ; 4 pixels per loop
   vst1.8    {q0}, [r0]!                       ; store
   bgt       %b1
 
+  pop       {r2}
   bx        lr
   ENDP
 
@@ -1334,6 +1340,8 @@ ARGBShuffleRow_NEON PROC
   ;   +r(width)         %2 r2
   ;   r(shuffler)       %3 r3
 
+  push       {r3}
+
   vld1.8     {q2}, [r3]                       ; shuffler
 1
   vld1.8     {q0}, [r0]!                      ; load 4 pixels.
@@ -1343,6 +1351,7 @@ ARGBShuffleRow_NEON PROC
   vst1.8     {q1}, [r1]!                      ; store 4.
   bgt        %b1
 
+  pop        {r3}
   bx         lr
   ENDP
 
@@ -1436,6 +1445,8 @@ ARGBToRGB565DitherRow_NEON PROC
   ;   r(dither4),       %2 r2
   ;   r(width)          %3 r3
 
+  push       {r1-r3}
+
   vdup.32    d2, r2                           ; dither4
 1
   vld4.8     {d20, d21, d22, d23}, [r1]!      ; load 8 pixels of ARGB.
@@ -1447,7 +1458,8 @@ ARGBToRGB565DitherRow_NEON PROC
   vst1.8     {q0}, [r0]!                      ; store 8 pixels RGB565.
   bgt        %b1
 
-  bx        lr
+  pop        {r1-r3}
+  bx         lr
   ENDP
 
 ARGBToARGB1555Row_NEON PROC
@@ -2551,6 +2563,102 @@ ARGBAttenuateRow_NEON PROC
   bx         lr
   ENDP
 
+; Quantize 8 ARGB pixels (32 bytes).
+; dst = (dst * scale >> 16) * interval_size + interval_offset;
+ARGBQuantizeRow_NEON PROC
+  ; input
+  ;  r0 = uint8* dst_argb
+  ;  r1 = int scale
+  ;  r2 = int interval_size
+  ;  r3 = int interval_offset
+  ;  r4 = int width [SP#0]
+  ;
+  ; +r(dst_argb),       // %0
+  ; +r(width)           // %1
+  ; r(scale),           // %2
+  ; r(interval_size),   // %3
+  ; r(interval_offset)  // %4
+
+  push       {r2-r4}
+  ldr        r4, [sp,#12]                      ; int width
+
+  vdup.u16   q8, r2
+  vshr.u16   q8, q8, #1                       ; scale >>= 1
+  vdup.u16   q9, r3                           ; interval multiply.
+  vdup.u16   q10, r4                          ; interval add
+
+  // 8 pixel loop.
+  1:
+  vld4.8     {d0, d2, d4, d6}, [r0]           ; load 8 pixels of ARGB.
+  subs       r1, r1, #8                       ; 8 processed per loop.
+  vmovl.u8   q0, d0                           ; b (0 .. 255)
+  vmovl.u8   q1, d2
+  vmovl.u8   q2, d4
+  vqdmulh.s16 q0, q0, q8                      ; b * scale
+  vqdmulh.s16 q1, q1, q8                      ; g
+  vqdmulh.s16 q2, q2, q8                      ; r
+  vmul.u16   q0, q0, q9                       ; b * interval_size
+  vmul.u16   q1, q1, q9                       ; g
+  vmul.u16   q2, q2, q9                       ; r
+  vadd.u16   q0, q0, q10                      ; b + interval_offset
+  vadd.u16   q1, q1, q10                      ; g
+  vadd.u16   q2, q2, q10                      ; r
+  vqmovn.u16 d0, q0
+  vqmovn.u16 d2, q1
+  vqmovn.u16 d4, q2
+  vst4.8     {d0, d2, d4, d6}, [r0]!          ; store 8 pixels of ARGB.
+  bgt        %b1
+
+  pop        {r2-r4}
+  bx         lr
+  ENDP
+
+
+; Shade 8 pixels at a time by specified value.
+; NOTE vqrdmulh.s16 q10, q10, d0[0] must use a scaler register from 0 to 8.
+; Rounding in vqrdmulh does +1 to high if high bit of low s16 is set.
+ARGBShadeRow_NEON PROC
+  ; input
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_argb
+  ;  r2 = int width
+  ;  r3 = int value
+  ;
+  ; +r(src_argb),  // %0 r0
+  ; +r(dst_argb),  // %1 r1
+  ; +r(width)      // %2 r2
+  ; r(value)       // %3 r3
+
+  push      {r3}
+
+  vdup.u32   q0, r3                           ; duplicate scale value.
+  vzip.u8    d0, d1                           ; d0 aarrggbb.
+  vshr.u16   q0, q0, #1                       ; scale / 2.
+
+  ; 8 pixel loop.
+1
+  vld4.8     {d20, d22, d24, d26}, [r0]!      ; load 8 pixels of ARGB.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vmovl.u8   q10, d20                         ; b (0 .. 255)
+  vmovl.u8   q11, d22
+  vmovl.u8   q12, d24
+  vmovl.u8   q13, d26
+  vqrdmulh.s16 q10, q10, d0[0]                ; b * scale * 2
+  vqrdmulh.s16 q11, q11, d0[1]                ; g
+  vqrdmulh.s16 q12, q12, d0[2]                ; r
+  vqrdmulh.s16 q13, q13, d0[3]                ; a
+  vqmovn.u16 d20, q10
+  vqmovn.u16 d22, q11
+  vqmovn.u16 d24, q12
+  vqmovn.u16 d26, q13
+  vst4.8     {d20, d22, d24, d26}, [r1]!      ; store 8 pixels of ARGB.
+  bgt        %b1
+
+  pop       {r3}
+  bx        lr
+  ENDP
+
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -2992,100 +3100,6 @@ SobelToPlaneRow_NEON PROC
 
   vpop       {q0 - q1}
   bx         lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; Quantize 8 ARGB pixels (32 bytes).
-; dst = (dst * scale >> 16) * interval_size + interval_offset;
-ARGBQuantizeRow_NEON PROC
-  ; input
-  ;  r0 = uint8* dst_argb
-  ;  r1 = int scale
-  ;  r2 = int interval_size
-  ;  r3 = int interval_offset
-  push       {r2 - r4}
-  ldr        r4, [sp,#12]                      ; int width
-  vpush	     {q0 - q3}
-  vpush	     {q8 - q10}
-
-  vdup.u16   q8, r1
-  vshr.u16   q8, q8, #1                       ; scale >>= 1
-  vdup.u16   q9, r2                           ; interval multiply.
-  vdup.u16   q10, r3                          ; interval add
-
-  ; 8 pixel loop.
-1
-  MEMACCESS	0
-  vld4.8     {d0, d2, d4, d6}, [r0]           ; load 8 pixels of ARGB.
-  subs       r4, r4, #8                       ; 8 processed per loop.
-  vmovl.u8   q0, d0                           ; b (0 .. 255)
-  vmovl.u8   q1, d2
-  vmovl.u8   q2, d4
-  vqdmulh.s16 q0, q0, q8                      ; b * scale
-  vqdmulh.s16 q1, q1, q8                      ; g
-  vqdmulh.s16 q2, q2, q8                      ; r
-  vmul.u16   q0, q0, q9                       ; b * interval_size
-  vmul.u16   q1, q1, q9                       ; g
-  vmul.u16   q2, q2, q9                       ; r
-  vadd.u16   q0, q0, q10                      ; b + interval_offset
-  vadd.u16   q1, q1, q10                      ; g
-  vadd.u16   q2, q2, q10                      ; r
-  vqmovn.u16 d0, q0
-  vqmovn.u16 d2, q1
-  vqmovn.u16 d4, q2
-  MEMACCESS	0
-  vst4.8     {d0, d2, d4, d6}, [r0]!          ; store 8 pixels of ARGB.
-  bgt        %b1
-
-  vpop		  {q8 - q10}
-  vpop		  {q0 - q3}
-  pop		  	{r2 - r4}
-  bx		  	lr
-  ENDP
-;*************************************************
-
-;*************************************************
-; Shade 8 pixels at a time by specified value.
-; NOTE vqrdmulh.s16 q10, q10, d0[0] must use a scaler register from 0 to 8.
-; Rounding in vqrdmulh does +1 to high if high bit of low s16 is set.
-ARGBShadeRow_NEON PROC
-  ; input
-  ;  r0 = const uint8* src_argb
-  ;  r1 = uint8* dst_argb
-  ;  r2 = int width
-  ;  r3 = int value
-  vpush	     {q0}
-  vpush	     {q10 - q13}
-
-  vdup.u32   q0, r3                           ; duplicate scale value.
-  vzip.u8    d0, d1                           ; d0 aarrggbb.
-  vshr.u16   q0, q0, #1                       ; scale / 2.
-
-  ; 8 pixel loop.
-1
-  MEMACCESS	0
-  vld4.8     {d20, d22, d24, d26}, [r0]!      ; load 8 pixels of ARGB.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vmovl.u8   q10, d20                         ; b (0 .. 255)
-  vmovl.u8   q11, d22
-  vmovl.u8   q12, d24
-  vmovl.u8   q13, d26
-  vqrdmulh.s16 q10, q10, d0[0]                ; b * scale * 2
-  vqrdmulh.s16 q11, q11, d0[1]                ; g
-  vqrdmulh.s16 q12, q12, d0[2]                ; r
-  vqrdmulh.s16 q13, q13, d0[3]                ; a
-  vqmovn.u16 d20, q10
-  vqmovn.u16 d22, q11
-  vqmovn.u16 d24, q12
-  vqmovn.u16 d26, q13
-  MEMACCESS	1
-  vst4.8     {d20, d22, d24, d26}, [r1]!      ; store 8 pixels of ARGB.
-  bgt        %b1
-
-  vpop		  {q10 - q13}
-  vpop		  {q0}
-  bx		  	lr
   ENDP
 ;*************************************************
 
