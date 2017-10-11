@@ -1450,6 +1450,95 @@ ARGBToRGB565DitherRow_NEON PROC
   bx        lr
   ENDP
 
+ARGBToARGB1555Row_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_argb
+  ;   r1 = uint8* dst_argb1555
+  ;   r2 = width
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(dst_argb1555), %1 r1
+  ;   "+r"(width)         %2 r2
+
+1
+  vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  ARGBTOARGB1555
+  vst1.8     {q0}, [r1]!                      ; store 8 pixels
+                                              ; ARGB1555.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+ARGBToARGB4444Row_NEON PROC
+  ; input
+  ;    r0 = const uint8* src_argb
+  ;    r1 = uint8* dst_argb4444
+  ;    r2 = int width
+  ;
+  ;    "+r"(src_argb),      %0 r0
+  ;    "+r"(dst_argb4444),  %1 r1
+  ;    "+r"(width)          %2 r2
+
+  vmov.u8    d4, #0x0f                        ; bits to clear with
+                                              ; vbic.
+1
+  vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  ARGBTOARGB4444
+  vst1.8     {q0}, [r1]!                      ; store 8 pixels
+                                              ; ARGB4444.
+  bgt        %b1
+
+  bx        lr
+  ENDP
+
+ARGBToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_argb
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   "+r"(src_argb),     %0 r0
+  ;   "+r"(dst_y),        %1 r1
+  ;   "+r"(width)         %2 r2
+
+  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
+  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
+  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
+  vmov.u8    d27, #16                         ; Add 16 constant
+1
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 ARGB pixels.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vmull.u8   q2, d0, d24                      ; B
+  vmlal.u8   q2, d1, d25                      ; G
+  vmlal.u8   q2, d2, d26                      ; R
+  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d27
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+ARGBExtractAlphaRow_NEON PROC
+  ; input
+  ;     r0 = const uint8* src_argb
+  ;     r1 = uint8* dst_a
+  ;     r2 = int width
+
+1
+  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels
+  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels
+  subs       r2, r2, #16                      ; 16 processed per loop
+  vst1.8     {q3}, [r1]!                      ; store 16 A's.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
@@ -1597,55 +1686,6 @@ I422ToARGB4444Row_NEON PROC
   vpop      {q8 - q15}
   vpop      {q0 - q4}
   pop       {r4, r5}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGBToARGB1555Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_argb1555
-  ;     r2 = pix
-  vpush     {q0}
-  vpush     {q8 - q11}
-
-1
-  MEMACCESS	0
-  vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  ARGBTOARGB1555
-  MEMACCESS	1
-  vst1.8     {q0}, [r1]!                      ; store 8 pixels ARGB1555.
-  bgt        %b1
-
-  vpop     {q8 - q11}
-  vpop     {q0}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGBToARGB4444Row_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_argb4444
-  ;     r2 = pix
-  vpush     {q0}
-  vpush     {q8 - q11}
-
-  vmov.u8    d4, #0x0f                        ; bits to clear with vbic.
-1
-  MEMACCESS	0
-  vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  ARGBTOARGB4444
-  MEMACCESS	1
-  vst1.8     {q0}, [r1]!                      ; store 8 pixels ARGB4444.
-  bgt        %b1
-
-  vpop     {q8 - q11}
-  vpop     {q0}
   bx        lr
   ENDP
 ;*************************************************
@@ -2573,28 +2613,6 @@ BGRAToUVRow_NEON PROC
 ;*************************************************
 
 ;*************************************************
-ARGBExtractAlphaRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush      {q0 - q3}
-
-1
-  MEMACCESS 0
-  vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels
-  vld4.8     {d1, d3, d5, d7}, [r0]!          ; load next 8 ARGB pixels
-  subs       r2, r2, #16                      ; 16 processed per loop
-  MEMACCESS 1
-  vst1.8     {q3}, [r1]!                      ; store 16 A's.
-  bgt        %b1
-
-  vpop      {q0 - q3}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
 ARGBToYJRow_NEON PROC
   ; input
   ;     r0 = const uint8* src_argb
@@ -2680,39 +2698,6 @@ ARGBToUVRow_NEON PROC
   vpop	      {q0 - q7}
   pop		    	{r4}
   bx		    	lr
-  ENDP
-;*************************************************
-
-;*************************************************
-ARGBToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_bgra
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	     {q0-q2}
-  vpush	     {q12,q13}
-
-  vmov.u8    d24, #13                         ; B * 0.1016 coefficient
-  vmov.u8    d25, #65                         ; G * 0.5078 coefficient
-  vmov.u8    d26, #33                         ; R * 0.2578 coefficient
-  vmov.u8    d27, #16                         ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 ARGB pixels.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vmull.u8   q2, d0, d24                      ; B
-  vmlal.u8   q2, d1, d25                      ; G
-  vmlal.u8   q2, d2, d26                      ; R
-  vqrshrun.s16 d0, q2, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d27
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop		   {q12, q13}
-  vpop		   {q0-q2}
-  bx	       lr
   ENDP
 ;*************************************************
 
