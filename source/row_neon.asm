@@ -373,11 +373,11 @@ I444ToARGBRow_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_argb),     %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_argb),     %3 r3
+  ;   +r(width)         %4 r5
 
   push      {r4-r5}           ; SP moved 8
   ldr       r4, [sp,#8]       ; const struct YuvConstants* yuvconstants
@@ -410,11 +410,11 @@ I422ToARGBRow_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;  "+r"(src_y),         %0 r0
-  ;  "+r"(src_u),         %1 r1
-  ;  "+r"(src_v),         %2 r2
-  ;  "+r"(dst_argb),      %3 r3
-  ;  "+r"(width)          %4 r5
+  ;  +r(src_y),         %0 r0
+  ;  +r(src_u),         %1 r1
+  ;  +r(src_v),         %2 r2
+  ;  +r(dst_argb),      %3 r3
+  ;  +r(width)          %4 r5
 
   push      {r4-r5}           ; SP moved 8
   ldr       r4, [sp,#8]       ; const struct YuvConstants* yuvconstants
@@ -444,12 +444,12 @@ I422AlphaToARGBRow_NEON PROC
   ;   r5 = const struct YuvConstants* yuvconstants [SP#4]
   ;   r6 = width [SP#8]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(src_a),        %3 r3
-  ;   "+r"(dst_argb),     %4 r4
-  ;   "+r"(width)         %5 r6
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(src_a),        %3 r3
+  ;   +r(dst_argb),     %4 r4
+  ;   +r(width)         %5 r6
 
   push      {r4-r6}           ; SP moved 12
   ldr       r4, [sp,#12]      ; uint8* dst_argb
@@ -479,11 +479,11 @@ I422ToRGBARow_NEON PROC
   ;   r4 =  const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 =  int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_rgba),     %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_rgba),     %3 r3
+  ;   +r(width)         %4 r5
 
   push      {r4-r5}          ; SP moved 8
   ldr       r4, [sp,#8]      ; const struct YuvConstants* yuvconstants
@@ -513,11 +513,11 @@ I422ToRGB24Row_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_rgb24),    %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_rgb24),    %3 r3
+  ;   +r(width)         %4 r5
 
   push      {r4-r5}          ; SP moved 8
   ldr       r4, [sp,#8]      ; const struct YuvConstants* yuvconstants
@@ -545,11 +545,11 @@ I422ToRGB565Row_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_rgb565),   %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_rgb565),   %3 r3
+  ;   +r(width)         %4 r5
 
   push      {r4-r5}          ; SP moved 8
   ldr       r4, [sp,#8]      ; const struct YuvConstants* yuvconstants
@@ -578,11 +578,11 @@ I422ToARGB1555Row_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_argb1555), %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_argb1555), %3 r3
+  ;   +r(width)         %4 r5
 
   push      {r4-r5}          ; SP moved 8
   ldr       r4, [sp,#8]      ; const struct YuvConstants* yuvconstants
@@ -613,11 +613,11 @@ I422ToARGB4444Row_NEON PROC
   ;   r4 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r5 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_argb4444), %3 r3
-  ;   "+r"(width)         %4 r5
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_argb4444), %3 r3
+  ;   +r(width)         %4 r5
 
   push       {r4-r5}
   ldr        r4, [sp,#12]     ; const struct YuvConstants* yuvconstants
@@ -647,9 +647,9 @@ I400ToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = width
   ;
-  ;   "+r"(src_y),        r0 r0
-  ;   "+r"(dst_argb),     r1 r1
-  ;   "+r"(width)         r2 r2
+  ;   +r(src_y),        r0 r0
+  ;   +r(dst_argb),     r1 r1
+  ;   +r(width)         r2 r2
 
   push       {r4}
 
@@ -675,9 +675,9 @@ J400ToARGBRow_NEON PROC
   ;  r1 = uint8* dst_argb
   ;  r2 = width
   ;
-  ;  "+r"(src_y),         %0 r0
-  ;  "+r"(dst_argb),      %1 r1
-  ;  "+r"(width)          %2 r2
+  ;  +r(src_y),         %0 r0
+  ;  +r(dst_argb),      %1 r1
+  ;  +r(width)          %2 r2
 
   vmov.u8    d23, #255
 1
@@ -699,10 +699,10 @@ NV12ToARGBRow_NEON PROC
   ;   r3 = const struct YuvConstants* yuvconstants [SP#0]
   ;   r4 = int width [SP#4]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_uv),       %1 r1
-  ;   "+r"(dst_argb),     %2 r2
-  ;   "+r"(width)         %3 r4
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_uv),       %1 r1
+  ;   +r(dst_argb),     %2 r2
+  ;   +r(width)         %3 r4
 
   push       {r4}                             ; SP moved 4
   ldr        r3, [sp,#4]                      ; const struct YuvConstants* yuvconstants
@@ -729,10 +729,10 @@ NV21ToARGBRow_NEON PROC
   ;   r3 = const struct YuvConstants* yuvconstants
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_vu),       %1 r1
-  ;   "+r"(dst_argb),     %2 r2
-  ;   "+r"(width)         %3 r4
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_vu),       %1 r1
+  ;   +r(dst_argb),     %2 r2
+  ;   +r(width)         %3 r4
 
   push       {r4}                             ; SP moved 4
   ldr        r3, [sp,#4]                      ; int witdh
@@ -758,10 +758,10 @@ NV12ToRGB565Row_NEON PROC
   ;   r3 = const struct YuvConstants* yuvconstants
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_uv),       %1 r1
-  ;   "+r"(dst_rgb565),   %2 r2
-  ;   "+r"(width)         %3 r4
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_uv),       %1 r1
+  ;   +r(dst_rgb565),   %2 r2
+  ;   +r(width)         %3 r4
 
   push      {r4}
   ldr       r4, [SP,#4]           ; int width
@@ -786,9 +786,9 @@ YUY2ToARGBRow_NEON PROC
   ;   r2 = const struct YuvConstants* yuvconstants
   ;   r3 = width
   ;
-  ;   "+r"(src_yuy2),     %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r3
+  ;   +r(src_yuy2),     %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r3
 
   YUVTORGB_SETUP r2
   vmov.u8    d23, #255
@@ -809,9 +809,9 @@ UYVYToARGBRow_NEON PROC
   ;   r2 = const struct YuvConstants* yuvconstants
   ;   r3 = width
   ;
-  ;   "+r"(src_uyvy),     %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r3
+  ;   +r(src_uyvy),     %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r3
 
   YUVTORGB_SETUP r2
   vmov.u8    d23, #255
@@ -833,10 +833,10 @@ SplitUVRow_NEON PROC
   ;   r2 = uint8* dst_v
   ;   r3 = int width
   ;
-  ;   "+r"(src_uv),       %0 r0
-  ;   "+r"(dst_u),        %1 r1
-  ;   "+r"(dst_v),        %2 r2
-  ;   "+r"(width)         %3 r3 // Output registers
+  ;   +r(src_uv),       %0 r0
+  ;   +r(dst_u),        %1 r1
+  ;   +r(dst_v),        %2 r2
+  ;   +r(width)         %3 r3 // Output registers
 
 1
   vld2.8     {q0, q1}, [r0]!                  ; load 16 pairs of UV
@@ -856,10 +856,10 @@ MergeUVRow_NEON PROC
   ;   r2 = uint8* dst_uv
   ;   r3 = int width
   ;
-  ;   "+r"(src_u),        %0 r0
-  ;   "+r"(src_v),        %1 r1
-  ;   "+r"(dst_uv),       %2 r2
-  ;   "+r"(width)         %3 r3 ; Output registers
+  ;   +r(src_u),        %0 r0
+  ;   +r(src_v),        %1 r1
+  ;   +r(dst_uv),       %2 r2
+  ;   +r(width)         %3 r3 ; Output registers
 
 1
   vld1.8     {q0}, [r0]!                      ; load U
@@ -894,9 +894,9 @@ SetRow_NEON PROC
   ;   r1 = uint8* v8
   ;   r2 = int count
   ;
-  ;   "+r"(dst),          %0
-  ;   "+r"(count)         %1
-  ;   "r"(v8)             %2
+  ;   +r(dst),          %0
+  ;   +r(count)         %1
+  ;   r(v8)             %2
 
   vdup.8    q0, r2                            ; duplicate 16 bytes
 1
@@ -914,9 +914,9 @@ ARGBSetRow_NEON PROC
   ;   r1 = uint8* v32
   ;   r2 = int count
   ;
-  ;   "+r"(dst),          %0
-  ;   "+r"(count)         %1
-  ;   "r"(v32)            %2
+  ;   +r(dst),          %0
+  ;   +r(count)         %1
+  ;   r(v32)            %2
 
   vdup.u32  q0, r2                            ; duplicate 4 ints
 1
@@ -933,9 +933,9 @@ MirrorRow_NEON PROC
   ;   r1 = uint8* dst
   ;   r2 = int width
   ;
-  ;   "+r"(src),          %0
-  ;   "+r"(dst),          %1
-  ;   "+r"(width)         %2
+  ;   +r(src),          %0
+  ;   +r(dst),          %1
+  ;   +r(width)         %2
 
   ; Start at end of source row.
   mov        r3, #-16
@@ -960,10 +960,10 @@ MirrorUVRow_NEON PROC
   ;   r2 = uint8* dst_
   ;   r3 = uint8* width
   ;
-  ;   "+r"(src_uv),       %0 r0
-  ;   "+r"(dst_u),        %1 r1
-  ;   "+r"(dst_v),        %2 r2
-  ;   "+r"(width)         %3 r3
+  ;   +r(src_uv),       %0 r0
+  ;   +r(dst_u),        %1 r1
+  ;   +r(dst_v),        %2 r2
+  ;   +r(width)         %3 r3
 
   push        {r12}
 
@@ -990,9 +990,9 @@ ARGBMirrorRow_NEON PROC
   ;   r1 = uint8* dst
   ;   r2 = int width
   ;
-  ;   "+r"(src),          %0 r0
-  ;   "+r"(dst),          %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src),          %0 r0
+  ;   +r(dst),          %1 r1
+  ;   +r(width)         %2 r2
 
   ; Start at end of source row.
   mov        r3, #-16
@@ -1016,9 +1016,9 @@ RGB24ToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = int pix
   ;
-  ;   "+r"(src_rgb24),    %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_rgb24),    %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d4, #255                         ; Alpha
 1
@@ -1036,9 +1036,9 @@ RAWToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = int pix
   ;
-  ;   "+r"(src_raw),      %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_raw),      %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d4, #255                         ; Alpha
 1
@@ -1057,9 +1057,9 @@ RAWToRGB24Row_NEON PROC
   ;   r1 = uint8* dst_rgb24
   ;   r2 = int width
   ;
-  ;   "+r"(src_raw),      %0 r0
-  ;   "+r"(dst_rgb24),    %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_raw),      %0 r0
+  ;   +r(dst_rgb24),    %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld3.8     {d1, d2, d3}, [r0]!              ; load 8 pixels of RAW.
@@ -1078,9 +1078,9 @@ RGB565ToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = int width
   ;
-  ;   "+r"(src_rgb565),   %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_rgb565),   %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d3, #255                         ; Alpha
 1
@@ -1099,9 +1099,9 @@ ARGB1555ToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = int width
   ;
-  ;   "+r"(src_argb1555), %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb1555), %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d3, #255                         ; Alpha
 1
@@ -1120,9 +1120,9 @@ ARGB4444ToARGBRow_NEON PROC
   ;   r1 = uint8* dst_argb
   ;   r2 = int pix
   ;
-  ;   "+r"(src_argb4444), %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb4444), %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d3, #255                         ; Alpha
 1
@@ -1141,9 +1141,9 @@ ARGBToRGB24Row_NEON PROC
   ;   r1 = uint8* dst_raw
   ;   r2 = width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_rgb24),    %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_rgb24),    %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld4.8     {d1, d2, d3, d4}, [r0]!          ; load 8 pixels of ARGB.
@@ -1161,9 +1161,9 @@ ARGBToRAWRow_NEON PROC
   ;   r1 = uint8* dst_raw
   ;   r2 = width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_raw),      %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_raw),      %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld4.8     {d1, d2, d3, d4}, [r0]!          ; load 8 pixels of ARGB.
@@ -1181,9 +1181,9 @@ YUY2ToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_yuy2),     %0 r0
-  ;   "+r"(dst_y),        %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_yuy2),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of YUY2.
@@ -1200,9 +1200,9 @@ UYVYToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_uyvy),     %0 r0
-  ;   "+r"(dst_y),        %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_uyvy),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld2.8     {q0, q1}, [r0]!                  ; load 16 pixels of UYVY.
@@ -1220,10 +1220,10 @@ YUY2ToUV422Row_NEON PROC
   ;   r2 = uint8* dst_v
   ;   r3 = int width
   ;
-  ;   "+r"(src_yuy2),     %0 r0
-  ;   "+r"(dst_u),        %1 r1
-  ;   "+r"(dst_v),        %2 r2
-  ;   "+r"(width)         r3 r3
+  ;   +r(src_yuy2),     %0 r0
+  ;   +r(dst_u),        %1 r1
+  ;   +r(dst_v),        %2 r2
+  ;   +r(width)         r3 r3
 
 1
   vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of YUY2.
@@ -1242,10 +1242,10 @@ UYVYToUV422Row_NEON PROC
   ;   r2 = uint8* dst_v
   ;   r3 = int width
   ;
-  ;   "+r"(src_uyvy),     %0 r0
-  ;   "+r"(dst_u),        %1 r1
-  ;   "+r"(dst_v),        %2 r2
-  ;   "+r"(width)         %3 r3
+  ;   +r(src_uyvy),     %0 r0
+  ;   +r(dst_u),        %1 r1
+  ;   +r(dst_v),        %2 r2
+  ;   +r(width)         %3 r3
 
 1
   vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 16 pixels of UYVY.
@@ -1265,11 +1265,11 @@ YUY2ToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_yuy2),     %0 r0
-  ;   "+r"(stride_yuy2),  %1 r1
-  ;   "+r"(dst_u),        %2 r2
-  ;   "+r"(dst_v),        %3 r3
-  ;   "+r"(width)         %4 r4
+  ;   +r(src_yuy2),     %0 r0
+  ;   +r(stride_yuy2),  %1 r1
+  ;   +r(dst_u),        %2 r2
+  ;   +r(dst_v),        %3 r3
+  ;   +r(width)         %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1297,11 +1297,11 @@ UYVYToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#4]
   ;
-  ;   "+r"(src_uyvy),     %0 r0
-  ;   "+r"(stride_uyvy),  %1 r1
-  ;   "+r"(dst_u),        %2 r2
-  ;   "+r"(dst_v),        %3 r3
-  ;   "+r"(width)         %4 r4
+  ;   +r(src_uyvy),     %0 r0
+  ;   +r(stride_uyvy),  %1 r1
+  ;   +r(dst_u),        %2 r2
+  ;   +r(dst_v),        %3 r3
+  ;   +r(width)         %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1329,10 +1329,10 @@ ARGBShuffleRow_NEON PROC
   ;   r2 = const uint8* shuffler
   ;   r3 = int width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_argb),     %1 r1
-  ;   "+r"(width)         %2 r2
-  ;   "r"(shuffler)       %3 r3
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_argb),     %1 r1
+  ;   +r(width)         %2 r2
+  ;   r(shuffler)       %3 r3
 
   vld1.8     {q2}, [r3]                       ; shuffler
 1
@@ -1354,11 +1354,11 @@ I422ToYUY2Row_NEON PROC
   ;   r3 = uint8* dst_yuy2
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_yuy2),     %3 r3
-  ;   "+r"(width)         %4 r4
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_yuy2),     %3 r3
+  ;   +r(width)         %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1383,11 +1383,11 @@ I422ToUYVYRow_NEON PROC
   ;   r3 = uint8* dst_uyvy
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_y),        %0 r0
-  ;   "+r"(src_u),        %1 r1
-  ;   "+r"(src_v),        %2 r2
-  ;   "+r"(dst_uyvy),     %3 r3
-  ;   "+r"(width)         %4 r4
+  ;   +r(src_y),        %0 r0
+  ;   +r(src_u),        %1 r1
+  ;   +r(src_v),        %2 r2
+  ;   +r(dst_uyvy),     %3 r3
+  ;   +r(width)         %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1410,9 +1410,9 @@ ARGBToRGB565Row_NEON PROC
   ;   r1 = uint8* dst_rgb565
   ;   r2 = width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_rgb565),   %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_rgb565),   %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
@@ -1431,10 +1431,10 @@ ARGBToRGB565DitherRow_NEON PROC
   ;   r2 = const uint32 dither4
   ;   r3 = int width
   ;
-  ;   "+r"(dst_rgb)       %0 r0
-  ;   "r"(src_argb),      %1 r1
-  ;   "r"(dither4),       %2 r2
-  ;   "r"(width)          %3 r3
+  ;   +r(dst_rgb)       %0 r0
+  ;   r(src_argb),      %1 r1
+  ;   r(dither4),       %2 r2
+  ;   r(width)          %3 r3
 
   vdup.32    d2, r2                           ; dither4
 1
@@ -1456,9 +1456,9 @@ ARGBToARGB1555Row_NEON PROC
   ;   r1 = uint8* dst_argb1555
   ;   r2 = width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_argb1555), %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_argb1555), %1 r1
+  ;   +r(width)         %2 r2
 
 1
   vld4.8     {d20, d21, d22, d23}, [r0]!      ; load 8 pixels of ARGB.
@@ -1477,9 +1477,9 @@ ARGBToARGB4444Row_NEON PROC
   ;    r1 = uint8* dst_argb4444
   ;    r2 = int width
   ;
-  ;    "+r"(src_argb),      %0 r0
-  ;    "+r"(dst_argb4444),  %1 r1
-  ;    "+r"(width)          %2 r2
+  ;    +r(src_argb),      %0 r0
+  ;    +r(dst_argb4444),  %1 r1
+  ;    +r(width)          %2 r2
 
   vmov.u8    d4, #0x0f                        ; bits to clear with
                                               ; vbic.
@@ -1500,9 +1500,9 @@ ARGBToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_y),        %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d24, #13                         ; B * 0.1016 coefficient
   vmov.u8    d25, #65                         ; G * 0.5078 coefficient
@@ -1524,9 +1524,9 @@ ARGBToYRow_NEON PROC
 
 ARGBExtractAlphaRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_a
-  ;     r2 = int width
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_a
+  ;  r2 = int width
 
 1
   vld4.8     {d0, d2, d4, d6}, [r0]!          ; load 8 ARGB pixels
@@ -1544,9 +1544,9 @@ ARGBToYJRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_y),        %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d24, #15                         ; B * 0.11400 coefficient
   vmov.u8    d25, #75                         ; G * 0.58700 coefficient
@@ -1572,10 +1572,10 @@ ARGBToUV444Row_NEON PROC
   ;   r2 = uint8* dst_v
   ;   r3 = int width
   ;
-  ;   "+r"(src_argb),     %0 r0
-  ;   "+r"(dst_u),        %1 r1
-  ;   "+r"(dst_v),        %2 r2
-  ;   "+r"(width)         %3 r3
+  ;   +r(src_argb),     %0 r0
+  ;   +r(dst_u),        %1 r1
+  ;   +r(dst_v),        %2 r2
+  ;   +r(width)         %3 r3
 
   vmov.u8    d24, #112                        ; UB / VR 0.875
                                               ; coefficient
@@ -1616,11 +1616,11 @@ ARGBToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width
   ;
-  ;   "+r"(src_argb),         %0 r0
-  ;   "+r"(src_stride_argb),  %1 r1
-  ;   "+r"(dst_u),            %2 r2
-  ;   "+r"(dst_v),            %3 r3
-  ;   "+r"(width)             %4 r4 [SP#0]
+  ;   +r(src_argb),         %0 r0
+  ;   +r(src_stride_argb),  %1 r1
+  ;   +r(dst_u),            %2 r2
+  ;   +r(dst_v),            %3 r3
+  ;   +r(width)             %4 r4 [SP#0]
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1668,11 +1668,11 @@ ARGBToUVJRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_argb),         %0 r0
-  ;   "+r"(src_stride_argb),  %1 r1
-  ;   "+r"(dst_u),            %2 r2
-  ;   "+r"(dst_v),            %3 r3
-  ;   "+r"(width)             %4 r4
+  ;   +r(src_argb),         %0 r0
+  ;   +r(src_stride_argb),  %1 r1
+  ;   +r(dst_u),            %2 r2
+  ;   +r(dst_v),            %3 r3
+  ;   +r(width)             %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1718,11 +1718,11 @@ BGRAToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width
   ;
-  ;   "+r"(src_bgra),         %0 r0
-  ;   "+r"(src_stride_bgra),  %1 r1
-  ;   "+r"(dst_u),            %2 r2
-  ;   "+r"(dst_v),            %3 r3
-  ;   "+r"(width)             %4 r4
+  ;   +r(src_bgra),         %0 r0
+  ;   +r(src_stride_bgra),  %1 r1
+  ;   +r(dst_u),            %2 r2
+  ;   +r(dst_v),            %3 r3
+  ;   +r(width)             %4 r4
 
   push      {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1768,11 +1768,11 @@ ABGRToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#4]
   ;
-  ;   "+r"(src_abgr),         %0
-  ;   "+r"(src_stride_abgr),  %1
-  ;   "+r"(dst_u),            %2
-  ;   "+r"(dst_v),            %3
-  ;   "+r"(width)             %4
+  ;   +r(src_abgr),         %0
+  ;   +r(src_stride_abgr),  %1
+  ;   +r(dst_u),            %2
+  ;   +r(dst_v),            %3
+  ;   +r(width)             %4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int witdh
@@ -1818,11 +1818,11 @@ RGBAToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_rgba),         %0
-  ;   "+r"(src_stride_rgba),  %1
-  ;   "+r"(dst_u),            %2
-  ;   "+r"(dst_v),            %3
-  ;   "+r"(width)             %4
+  ;   +r(src_rgba),         %0
+  ;   +r(src_stride_rgba),  %1
+  ;   +r(dst_u),            %2
+  ;   +r(dst_v),            %3
+  ;   +r(width)             %4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1868,11 +1868,11 @@ RGB24ToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_rgb24),        %0 r0
-  ;   "+r"(src_stride_rgb24), %1 r1
-  ;   "+r"(dst_u),            %2 r2
-  ;   "+r"(dst_v),            %3 r3
-  ;   "+r"(width)             %4 r4
+  ;   +r(src_rgb24),        %0 r0
+  ;   +r(src_stride_rgb24), %1 r1
+  ;   +r(dst_u),            %2 r2
+  ;   +r(dst_v),            %3 r3
+  ;   +r(width)             %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -1912,17 +1912,17 @@ RGB24ToUVRow_NEON PROC
 
 RAWToUVRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_raw
-  ;     r1 = int src_stride_raw
-  ;     r2 = uint8* dst_u
-  ;     r3 = uint8* dst_v
-  ;     r4 = int width [SP#0]
+  ;  r0 = const uint8* src_raw
+  ;  r1 = int src_stride_raw
+  ;  r2 = uint8* dst_u
+  ;  r3 = uint8* dst_v
+  ;  r4 = int width [SP#0]
   ;
-  ;     "+r"(src_raw),        %0 r0
-  ;     "+r"(src_stride_raw), %1 r1
-  ;     "+r"(dst_u),          %2 r2
-  ;     "+r"(dst_v),          %3 r3
-  ;     "+r"(width)           %4 r4
+  ;     +r(src_raw),        %0 r0
+  ;     +r(src_stride_raw), %1 r1
+  ;     +r(dst_u),          %2 r2
+  ;     +r(dst_v),          %3 r3
+  ;     +r(width)           %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int piwidthx
@@ -1969,11 +1969,11 @@ RGB565ToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#4]
   ;
-  ;   "+r"(src_rgb565),         %0 r0
-  ;   "+r"(src_stride_rgb565),  %1 r1
-  ;   "+r"(dst_u),              %2 r2
-  ;   "+r"(dst_v),              %3 r3
-  ;   "+r"(width)               %4 r4
+  ;   +r(src_rgb565),         %0 r0
+  ;   +r(src_stride_rgb565),  %1 r1
+  ;   +r(dst_u),              %2 r2
+  ;   +r(dst_v),              %3 r3
+  ;   +r(width)               %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -2041,11 +2041,11 @@ ARGB1555ToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_argb1555),         %0 r0
-  ;   "+r"(src_stride_argb1555),  %1 r1
-  ;   "+r"(dst_u),                %2 r2
-  ;   "+r"(dst_v),                %3 r3
-  ;   "+r"(width)                 %4 r4
+  ;   +r(src_argb1555),         %0 r0
+  ;   +r(src_stride_argb1555),  %1 r1
+  ;   +r(dst_u),                %2 r2
+  ;   +r(dst_v),                %3 r3
+  ;   +r(width)                 %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -2113,11 +2113,11 @@ ARGB4444ToUVRow_NEON PROC
   ;   r3 = uint8* dst_v
   ;   r4 = int width [SP#0]
   ;
-  ;   "+r"(src_argb4444),         %0 r0
-  ;   "+r"(src_stride_argb4444),  %1 r1
-  ;   "+r"(dst_u),                %2 r2
-  ;   "+r"(dst_v),                %3 r3
-  ;   "+r"(width)                 %4 r4
+  ;   +r(src_argb4444),         %0 r0
+  ;   +r(src_stride_argb4444),  %1 r1
+  ;   +r(dst_u),                %2 r2
+  ;   +r(dst_v),                %3 r3
+  ;   +r(width)                 %4 r4
 
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
@@ -2182,9 +2182,9 @@ RGB565ToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_rgb565),   %0
-  ;   "+r"(dst_y),        %1
-  ;   "+r"(width)         %2
+  ;   +r(src_rgb565),   %0
+  ;   +r(dst_y),        %1
+  ;   +r(width)         %2
 
   vmov.u8    d24, #13                         ; B * 0.1016 coefficient
   vmov.u8    d25, #65                         ; G * 0.5078 coefficient
@@ -2211,9 +2211,9 @@ ARGB1555ToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_argb1555), %0
-  ;   "+r"(dst_y),        %1
-  ;   "+r"(width)         %2
+  ;   +r(src_argb1555), %0
+  ;   +r(dst_y),        %1
+  ;   +r(width)         %2
 
   vmov.u8    d24, #13                         ; B * 0.1016 coefficient
   vmov.u8    d25, #65                         ; G * 0.5078 coefficient
@@ -2236,13 +2236,13 @@ ARGB1555ToYRow_NEON PROC
 
 ARGB4444ToYRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb4444
-  ;     r1 = uint8* dst_y
-  ;     r2 = int width
+  ;  r0 = const uint8* src_argb4444
+  ;  r1 = uint8* dst_y
+  ;  r2 = int width
   ;
-  ;    "+r"(src_argb4444),  %0 r0
-  ;    "+r"(dst_y),         %1 r1
-  ;    "+r"(width)          %2 r2
+  ;    +r(src_argb4444),  %0 r0
+  ;    +r(dst_y),         %1 r1
+  ;    +r(width)          %2 r2
 
   vmov.u8    d24, #13                         ; B * 0.1016 coefficient
   vmov.u8    d25, #65                         ; G * 0.5078 coefficient
@@ -2269,9 +2269,9 @@ BGRAToYRow_NEON PROC
   ;   r1 = uint8* dst_y
   ;   r2 = int width
   ;
-  ;   "+r"(src_bgra),     %0 r0
-  ;   "+r"(dst_y),        %1 r1
-  ;   "+r"(width)         %2 r2
+  ;   +r(src_bgra),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
 
   vmov.u8    d4, #33                          ; R * 0.2578 coefficient
   vmov.u8    d5, #65                          ; G * 0.5078 coefficient
@@ -2291,13 +2291,69 @@ BGRAToYRow_NEON PROC
   bx         lr
   ENDP
 
+ABGRToYRow_NEON PROC
+  ; input
+  ;   r0 = const uint8* src_abgr
+  ;   r1 = uint8* dst_y
+  ;   r2 = int width
+  ;
+  ;   +r(src_abgr),     %0 r0
+  ;   +r(dst_y),        %1 r1
+  ;   +r(width)         %2 r2
+
+  vmov.u8    d4, #33                          ; R * 0.2578 coefficient
+  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
+  vmov.u8    d6, #13                          ; B * 0.1016 coefficient
+  vmov.u8    d7, #16                          ; Add 16 constant
+  1:
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of ABGR.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vmull.u8   q8, d0, d4                       ; R
+  vmlal.u8   q8, d1, d5                       ; G
+  vmlal.u8   q8, d2, d6                       ; B
+  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d7
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx        lr
+  ENDP
+
+RGBAToYRow_NEON PROC
+  ; input
+  ;  r0 = const uint8* src_rgba
+  ;  r1 = uint8* dst_y
+  ;  r2 = int width
+  ;
+  ;  +r(src_rgba),  // %0
+  ;  +r(dst_y),     // %1
+  ;  +r(width)      // %2
+
+  vmov.u8    d4, #13                          ; B * 0.1016 coefficient
+  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
+  vmov.u8    d6, #33                          ; R * 0.2578 coefficient
+  vmov.u8    d7, #16                          ; Add 16 constant
+1
+  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of RGBA.
+  subs       r2, r2, #8                       ; 8 processed per loop.
+  vmull.u8   q8, d1, d4                       ; B
+  vmlal.u8   q8, d2, d5                       ; G
+  vmlal.u8   q8, d3, d6                       ; R
+  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
+  vqadd.u8   d0, d7
+  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
+  bgt        %b1
+
+  bx         lr
+  ENDP
+
 ;*************************************************
 I411ToARGBRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_u
+  ;  r2 = const uint8* src_v
+  ;  r3 =  uint8* dst_argb
   push      {r4, r5}
   ldr       r4, [sp,#8]      ; int width
   vpush     {q0 - q4}
@@ -2324,10 +2380,10 @@ I411ToARGBRow_NEON PROC
 ;*************************************************
 I422ToBGRARow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_bgra
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_u
+  ;  r2 = const uint8* src_v
+  ;  r3 =  uint8* dst_bgra
   push      {r4, r5}
   ldr       r4, [sp,#8]      ; int width
   vpush     {q0 - q4}
@@ -2355,10 +2411,10 @@ I422ToBGRARow_NEON PROC
 ;*************************************************
 I422ToABGRRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_abgr
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_u
+  ;  r2 = const uint8* src_v
+  ;  r3 =  uint8* dst_abgr
   push      {r4, r5}
   ldr       r4, [sp,#8]      ; int width
   vpush     {q0 - q4}
@@ -2385,10 +2441,10 @@ I422ToABGRRow_NEON PROC
 ;*************************************************
 I422ToRAWRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_raw
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_u
+  ;  r2 = const uint8* src_v
+  ;  r3 =  uint8* dst_raw
   push      {r4, r5}
   ldr       r4, [sp,#8]      ; int width
   vpush     {q0 - q4}
@@ -2414,10 +2470,10 @@ I422ToRAWRow_NEON PROC
 ;*************************************************
 I422ToARGB4444Row_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_u
-  ;     r2 = const uint8* src_v
-  ;     r3 =  uint8* dst_argb4444
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_u
+  ;  r2 = const uint8* src_v
+  ;  r3 =  uint8* dst_argb4444
   push      {r4, r5}
   ldr       r4, [sp,#8]      ; int width
   vpush     {q0 - q4}
@@ -2445,10 +2501,10 @@ I422ToARGB4444Row_NEON PROC
 ;*************************************************
 NV21ToRGB565Row_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y
-  ;     r1 = const uint8* src_uv
-  ;     r2 = uint8* dst_rgb565
-  ;     r3 = int width
+  ;  r0 = const uint8* src_y
+  ;  r1 = const uint8* src_uv
+  ;  r2 = uint8* dst_rgb565
+  ;  r3 = int width
   push      {r5}
   vpush     {q0 - q4}
   vpush     {q8 - q15}
@@ -2472,77 +2528,11 @@ NV21ToRGB565Row_NEON PROC
 ;*************************************************
 
 ;*************************************************
-ABGRToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_abgr
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	   {d0 - d7}
-  vpush	   {q8}
-
-  vmov.u8    d4, #33                          ; R * 0.2578 coefficient
-  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
-  vmov.u8    d6, #13                          ; B * 0.1016 coefficient
-  vmov.u8    d7, #16                          ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of ABGR.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vmull.u8   q8, d0, d4                       ; R
-  vmlal.u8   q8, d1, d5                       ; G
-  vmlal.u8   q8, d2, d6                       ; B
-  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d7
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop	    {q8}
-  vpop	    {d0 - d7}
-  bx        lr
-  ENDP
-;*************************************************
-
-;*************************************************
-RGBAToYRow_NEON PROC
-  ; input
-  ;     r0 = const uint8* src_rgba
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
-  vpush	   {d0 - d7}
-  vpush	   {q8}
-
-  vmov.u8    d4, #13                          ; B * 0.1016 coefficient
-  vmov.u8    d5, #65                          ; G * 0.5078 coefficient
-  vmov.u8    d6, #33                          ; R * 0.2578 coefficient
-  vmov.u8    d7, #16                          ; Add 16 constant
-
-1
-  MEMACCESS	0
-  vld4.8     {d0, d1, d2, d3}, [r0]!          ; load 8 pixels of RGBA.
-  subs       r2, r2, #8                       ; 8 processed per loop.
-  vmull.u8   q8, d1, d4                       ; B
-  vmlal.u8   q8, d2, d5                       ; G
-  vmlal.u8   q8, d3, d6                       ; R
-  vqrshrun.s16 d0, q8, #7                     ; 16 bit to 8 bit Y
-  vqadd.u8   d0, d7
-  MEMACCESS	1
-  vst1.8     {d0}, [r1]!                      ; store 8 pixels Y.
-  bgt        %b1
-
-  vpop	     {q8}
-  vpop	     {d0 - d7}
-  bx		     lr
-  ENDP
-;*************************************************
-
-;*************************************************
 RGB24ToYRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_rgb24
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
+  ;  r0 = const uint8* src_rgb24
+  ;  r1 = uint8* dst_y
+  ;  r2 = int pix
   vpush	    {d0 - d7}
   vpush	    {q8}
 
@@ -2574,10 +2564,10 @@ RGB24ToYRow_NEON PROC
 ; 32x1 pixels -> 8x1.  pix is number of argb pixels. e.g. 32.
 ARGBToUV411Row_NEON PROC
     ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_v
-  ;     r3 = int pix
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_u
+  ;  r2 = uint8* dst_v
+  ;  r3 = int pix
   vpush	     {q0 - q7}
   vpush 	   {q8 - q14}
   vpush	     {q15}
@@ -2643,10 +2633,10 @@ ARGBToUV411Row_NEON PROC
 ;*************************************************
 ARGBToUV422Row_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_u
-  ;     r2 = uint8* dst_v
-  ;     r3 = int pix
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_u
+  ;  r2 = uint8* dst_v
+  ;  r3 = int pix
   vpush	     {q0 - q7}
   vpush 	   {q8 - q14}
   vpush	     {q15}
@@ -2699,10 +2689,10 @@ ARGBToUV422Row_NEON PROC
   ; Select G channels from ARGB.  e.g.  GGGGGGGG
 ARGBToBayerGGRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_bayer
-  ;     r2 = uint32 selector
-  ;     r3 =  int pix
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_bayer
+  ;  r2 = uint32 selector
+  ;  r3 =  int pix
   vpush			{q0, q1}
 
 1
@@ -2721,9 +2711,9 @@ ARGBToBayerGGRow_NEON PROC
 ;*************************************************
 RAWToYRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_raw
-  ;     r1 = uint8* dst_y
-  ;     r2 = int pix
+  ;  r0 = const uint8* src_raw
+  ;  r1 = uint8* dst_y
+  ;  r2 = int pix
   vpush      {d0 - d7}
   vpush      {q8}
 
@@ -2755,10 +2745,10 @@ RAWToYRow_NEON PROC
 ; Add 2 rows of ARGB pixels together, 8 pixels at a time.
 ARGBAddRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb0
-  ;     r1 = uint8* src_argb1
-  ;     r2 = uint8* dst_arg
-  ;     r3 = int width
+  ;  r0 = const uint8* src_argb0
+  ;  r1 = uint8* src_argb1
+  ;  r2 = uint8* dst_arg
+  ;  r3 = int width
    vpush       {q0 - q3}
   ; 8 pixel loop.
 1
@@ -2782,10 +2772,10 @@ ARGBAddRow_NEON PROC
 ; Subtract 2 rows of ARGB pixels, 8 pixels at a time.
 ARGBSubtractRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb0
-  ;     r1 = uint8* src_argb1
-  ;     r2 = uint8* dst_arg
-  ;     r3 = int width
+  ;  r0 = const uint8* src_argb0
+  ;  r1 = uint8* src_argb1
+  ;  r2 = uint8* dst_arg
+  ;  r3 = int width
    vpush       {q0 - q3}
   ; 8 pixel loop.
 
@@ -2814,10 +2804,10 @@ ARGBSubtractRow_NEON PROC
 ; B = Sobel
 SobelRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_sobelx
-  ;     r1 = const uint8* src_sobely
-  ;     r2 = uint8* dst_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* src_sobelx
+  ;  r1 = const uint8* src_sobely
+  ;  r2 = uint8* dst_argb
+  ;  r3 = int width
   vpush       {q0 - q1}
   vmov.u8    d3, #255                         ; alpha
   ; 8 pixel loop.
@@ -2844,10 +2834,10 @@ SobelRow_NEON PROC
 ; Adds Sobel X and Sobel Y and stores Sobel into plane.
 SobelToPlaneRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_sobelx
-  ;     r1 = const uint8* src_sobely
-  ;     r2 = uint8* dst_y
-  ;     r3 = int width
+  ;  r0 = const uint8* src_sobelx
+  ;  r1 = const uint8* src_sobely
+  ;  r2 = uint8* dst_y
+  ;  r3 = int width
   vpush       {q0 - q1}
   ; 16 pixel loop.
 
@@ -2871,9 +2861,9 @@ SobelToPlaneRow_NEON PROC
 ; Attenuate 8 pixels at a time.
 ARGBAttenuateRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = const uint8* dst_argb
-  ;     r2 = int width
+  ;  r0 = const uint8* src_argb
+  ;  r1 = const uint8* dst_argb
+  ;  r2 = int width
   vpush       {q0 - q1}
   vpush       {q10 - q12}
 
@@ -2903,10 +2893,10 @@ ARGBAttenuateRow_NEON PROC
 ; dst = (dst * scale >> 16) * interval_size + interval_offset;
 ARGBQuantizeRow_NEON PROC
   ; input
-  ;     r0 = uint8* dst_argb
-  ;     r1 = int scale
-  ;     r2 = int interval_size
-  ;     r3 = int interval_offset
+  ;  r0 = uint8* dst_argb
+  ;  r1 = int scale
+  ;  r2 = int interval_size
+  ;  r3 = int interval_offset
   push       {r2 - r4}
   ldr        r4, [sp,#12]                      ; int width
   vpush	     {q0 - q3}
@@ -2954,10 +2944,10 @@ ARGBQuantizeRow_NEON PROC
 ; Rounding in vqrdmulh does +1 to high if high bit of low s16 is set.
 ARGBShadeRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_argb
-  ;     r2 = int width
-  ;     r3 = int value
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_argb
+  ;  r2 = int width
+  ;  r3 = int value
   vpush	     {q0}
   vpush	     {q10 - q13}
 
@@ -2998,9 +2988,9 @@ ARGBShadeRow_NEON PROC
 ; C code is (15 * b + 75 * g + 38 * r + 64) >> 7;
 ARGBGrayRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_argb
-  ;     r2 = int width
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_argb
+  ;  r2 = int width
   vpush	     {q0- q2}
   vpush	     {q12 - q13}
 
@@ -3035,8 +3025,8 @@ ARGBGrayRow_NEON PROC
 ;    r = (r * 50 + g * 98 + b * 24) >> 7
 ARGBSepiaRow_NEON PROC
   ; input
-  ;     r0 = uint8* dst_argb
-  ;     r1 = int width
+  ;  r0 = uint8* dst_argb
+  ;  r1 = int width
   vpush	     {q0- q3}
   vpush	     {q10 - q15}
 
@@ -3082,10 +3072,10 @@ ARGBSepiaRow_NEON PROC
 ; needs to saturate.  Consider doing a non-saturating version.
 ARGBColorMatrixRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_argb
-  ;     r1 = uint8* dst_argb
-  ;     r2 = const int8* matrix_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* src_argb
+  ;  r1 = uint8* dst_argb
+  ;  r2 = const int8* matrix_argb
+  ;  r3 = int width
   vpush	     {q0 - q7}
   vpush	     {q8 - q14}
   vpush		   {q15}
@@ -3150,10 +3140,10 @@ ARGBColorMatrixRow_NEON PROC
   ; dr * (256 - sa) / 256 + sr = dr - dr * sa / 256 + sr
 ARGBBlendRow_NEON PROC
    ; input
-  ;     r0 = const uint8* src_argb0
-  ;     r1 = const uint8* src_argb1
-  ;     r2 = int8* dst_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* src_argb0
+  ;  r1 = const uint8* src_argb1
+  ;  r2 = int8* dst_argb
+  ;  r3 = int width
   vpush	     {q0 - q3}
   vpush	     {q10 - q12}
 
@@ -3219,10 +3209,10 @@ ARGBBlendRow_NEON PROC
 ; Bilinear filter 16x2 -> 16x1
 InterpolateRow_NEON PROC
    ; input
-  ;     r0 = const uint8* dst_ptr
-  ;     r1 = const uint8* src_ptr
-  ;     r2 = int8* dst_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* dst_ptr
+  ;  r1 = const uint8* src_ptr
+  ;  r2 = int8* dst_argb
+  ;  r3 = int width
   push       {r4}
   ldr        r4, [sp,#4]                      ; int width
   vpush	     {q0 - q1}
@@ -3324,10 +3314,10 @@ InterpolateRow_NEON PROC
 ; Multiply 2 rows of ARGB pixels together, 8 pixels at a time.
 ARGBMultiplyRow_NEON PROC
    ; input
-  ;     r0 = const uint8* src_argb0
-  ;     r1 = const uint8* src_argb1
-  ;     r2 = int8* dst_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* src_argb0
+  ;  r1 = const uint8* src_argb1
+  ;  r2 = int8* dst_argb
+  ;  r3 = int width
   vpush	     {q0 - q3}
 
   ; 8 pixel loop.
@@ -3361,10 +3351,10 @@ ARGBMultiplyRow_NEON PROC
 ; -1  0  1
 SobelXRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y0
-  ;     r1 = const uint8* src_y1
-  ;     r2 = const uint8* src_y2
-  ;     r3 = uint8* dst_sobelx
+  ;  r0 = const uint8* src_y0
+  ;  r1 = const uint8* src_y1
+  ;  r2 = const uint8* src_y2
+  ;  r3 = uint8* dst_sobelx
   push      {r4 - r6}
   ldr       r4, [sp,#12]                      ; int width
   vpush	    {q0 - q1}
@@ -3410,10 +3400,10 @@ SobelXRow_NEON PROC
 ;  1  2  1
 SobelYRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_y0
-  ;     r1 = const uint8* src_y1
-  ;     r2 = uint8* dst_sobely
-  ;     r3 = int width
+  ;  r0 = const uint8* src_y0
+  ;  r1 = const uint8* src_y1
+  ;  r2 = uint8* dst_sobely
+  ;  r3 = int width
   vpush	     {q0 - q1}
   push	     {r4 - r5}
   mov		     r4, 1
@@ -3459,10 +3449,10 @@ SobelYRow_NEON PROC
 ; B = Sobel Y
 SobelXYRow_NEON PROC
   ; input
-  ;     r0 = const uint8* src_sobelx
-  ;     r1 = const uint8* src_sobely
-  ;     r2 = uint8* dst_argb
-  ;     r3 = int width
+  ;  r0 = const uint8* src_sobelx
+  ;  r1 = const uint8* src_sobely
+  ;  r2 = uint8* dst_argb
+  ;  r3 = int width
   vpush	     {q0 - q1}
 
   vmov.u8    d3, #255                         ; alpha
