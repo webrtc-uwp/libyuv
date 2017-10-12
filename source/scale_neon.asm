@@ -915,8 +915,8 @@ ScaleARGBRowDownEven_NEON PROC
   ;   "+r"(dst_width)     %2 r4
   ;   "r"(src_stepx)      %3 r2
 
-  push       {r4, r12}
-  ldr        r4, [sp, #8]                     ; int dst_width
+  push       {r2, r4, r12}
+  ldr        r4, [sp, #12]                     ; int dst_width
 
   mov        r12, r2, lsl #2
 
@@ -929,7 +929,7 @@ ScaleARGBRowDownEven_NEON PROC
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  pop        {r4, r12}
+  pop        {r2, r4, r12}
 
   bx         lr
   ENDP
@@ -950,8 +950,8 @@ ScaleARGBRowDownEvenBox_NEON PROC
   ;   "+r"(dst_width)     %3 r4
   ;    "r"(src_stepx)     %4 r2
 
-  push       {r4, r12}
-  ldr        r4, [sp, #8]                     ; int dst_width
+  push       {r2, r4, r12}
+  ldr        r4, [sp, #12]                     ; int dst_width
 
   mov        r12, r2, lsl #2
   add        r1, r1, r0
@@ -979,7 +979,7 @@ ScaleARGBRowDownEvenBox_NEON PROC
   vst1.8     {q0}, [r3]!
   bgt        %b1
 
-  pop        {r4, r12}
+  pop        {r2, r4, r12}
 
   bx         lr
   ENDP
