@@ -45,7 +45,7 @@ group("libyuv") {
   public_configs = [ ":libyuv_config" ]
 
   if (is_win && target_cpu == "x64") {
-    if (is_winuwp) {
+    if (is_target_winuwp) {
       public_deps = [
         ":libyuv_internal",
       ]
@@ -145,7 +145,7 @@ static_library("libyuv_internal") {
     # because in Windows x64 build it will get compiled with clang.
     deps += [ "//third_party:jpeg_includes" ]
   }
-  if (is_winuwp) {
+  if (is_target_winuwp) {
     deps += [ "//third_party/winuwp_compat:force_include_std" ]
   }
 
@@ -291,7 +291,7 @@ if (libyuv_include_tests) {
     if (is_android) {
       deps += [ "//testing/android/native_test:native_test_native_code" ]
     }
-    if (is_winuwp) {
+    if (is_target_winuwp) {
       deps += [ "//third_party/winuwp_compat:force_include_std" ]
     }
 
@@ -325,7 +325,7 @@ if (libyuv_include_tests) {
     if (is_linux) {
       cflags = [ "-fexceptions" ]
     }
-    if (is_winuwp) {
+    if (is_target_winuwp) {
       deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
@@ -342,7 +342,7 @@ if (libyuv_include_tests) {
     if (is_linux) {
       cflags = [ "-fexceptions" ]
     }
-    if (is_winuwp) {
+    if (is_target_winuwp) {
       deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
@@ -362,7 +362,7 @@ if (libyuv_include_tests) {
     if (!is_ios && !libyuv_disable_jpeg) {
       defines = [ "HAVE_JPEG" ]
     }
-    if (is_winuwp) {
+    if (is_target_winuwp) {
       deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
