@@ -172,10 +172,10 @@ static_library("libyuv_internal") {
 }
 
 if (libyuv_use_neon) {
+
   static_library("libyuv_neon") {
     sources = [
       # ARM Source Files
-      "source/compare_neon.asm",
       "source/compare_neon64.cc",
       "source/rotate_neon.cc",
       "source/rotate_neon64.cc",
@@ -184,7 +184,13 @@ if (libyuv_use_neon) {
       "source/scale_neon.cc",
       "source/scale_neon64.cc",
     ]
-
+    
+    if ((current_cpu == "arm" || current_cpu == "arm64") && current_os == "win" && target_os == "winuwp") {
+      sources += [ "source/compare_neon.asm" ]
+    } else {
+      sources += [ "source/compare_neon.cc" ]
+    }
+    
     public_configs = [ ":libyuv_config" ]
 
     # Always enable optimization for Release and NaCl builds (to workaround
