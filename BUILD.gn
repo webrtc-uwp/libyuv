@@ -175,7 +175,7 @@ if (libyuv_use_neon) {
   static_library("libyuv_neon") {
     sources = [
       # ARM Source Files
-      "source/compare_neon.cc",
+      "source/compare_neon.asm",
       "source/compare_neon64.cc",
       "source/rotate_neon.cc",
       "source/rotate_neon64.cc",
@@ -200,6 +200,8 @@ if (libyuv_use_neon) {
       configs -= [ "//build/config/compiler:compiler_arm_fpu" ]
       cflags = [ "-mfpu=neon" ]
     }
+    
+    include_dirs = [ "."]
   }
 }
 
