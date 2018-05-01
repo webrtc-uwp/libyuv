@@ -29,7 +29,7 @@
 
 #include "libyuv/basic_types.h"  // For CPU_X86
 
-#if defined(WINWUP) && defined(_M_ARM)
+#if defined(WINUWP) && defined(_M_ARM)
   #include <windows.h>
 #endif
 
