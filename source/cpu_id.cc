@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(WINUWP) && defined(_M_ARM)
+  #include <windows.h>
+#endif
+
 #ifdef __cplusplus
 namespace libyuv {
 extern "C" {
@@ -319,6 +323,13 @@ static SAFEBUFFERS int GetCpuFlags(void) {
     cpu_info &= ~kCpuHasNEON;
   }
 #endif  // __arm__
+#if defined (WINUWP) && defined(_M_ARM)
+  // Windows Runtime on ARM
+  if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+  {
+    cpu_info_ = kCpuHasNEON;
+  }
+#endif
   if (TestEnv("LIBYUV_DISABLE_ASM")) {
     cpu_info = 0;
   }

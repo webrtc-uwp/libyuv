@@ -30,7 +30,7 @@
     'build_neon': 0,
     'build_msa': 0,
     'conditions': [
-       ['(target_arch == "armv7" or target_arch == "armv7s" or \
+       ['(OS_RUNTIME=="winuwp" and (winuwp_platform=="win_phone" or winuwp_platform=="win10_arm")) or (target_arch == "armv7" or target_arch == "armv7s" or \
        (target_arch == "arm" and arm_version >= 7) or target_arch == "arm64")\
        and (arm_neon == 1 or arm_neon_optional == 1)', {
          'build_neon': 1,
@@ -85,6 +85,35 @@
                 # '-marm',  # arm32 not thumb
               ],
             }],
+            ['OS_RUNTIME=="winuwp" and (winuwp_platform=="win_phone" or winuwp_platform=="win10_arm")', {
+              'defines': [
+                'WINUWP',
+                '__ARM_NEON__',
+              ],
+              'sources': [
+                # sources.
+                'source/arm_asm_macros.in',
+                'source/compare_neon.asm',
+                'source/rotate_neon.asm',
+                'source/scale_neon.asm',
+                'source/row_neon.asm'
+              ], 
+               'sources!': [
+                # sources.
+                'source/compare_neon.cc',
+                'source/compare_neon64.cc',
+                'source/rotate_neon.cc',
+                'source/rotate_neon64.cc',
+                'source/row_neon.cc',
+                'source/row_neon64.cc',
+                'source/scale_neon.cc',
+                'source/scale_neon64.cc',
+              ], 
+            }],
+          ],
+          'include_dirs': [
+            'include',
+            '.',
           ],
         }],
         ['build_msa != 0', {

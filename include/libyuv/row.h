@@ -582,6 +582,15 @@ extern const struct YuvConstants SIMD_ALIGNED(kYvuH709Constants);  // BT.709
 #define LABELALIGN
 #endif
 
+#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM)
+#undef MEMACCESS
+#if defined(__native_client__)
+#define MEMACCESS(base) ".p2align 3\nbic %" #base ", #0xc0000000\n"
+#else /* defined(__native_client__) */
+#define MEMACCESS(base)
+#endif /* defined(__native_client__) */
+#endif /* defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) */
+
 // Intel Code Analizer markers.  Insert IACA_START IACA_END around code to be
 // measured and then run with iaca -64 libyuv_unittest.
 // IACA_ASM_START amd IACA_ASM_END are equivalents that can be used within

@@ -78,7 +78,7 @@ void PrintHelp(const char* program) {
   exit(0);
 }
 
-void ParseOptions(int argc, const char* argv[]) {
+void ParseOptions(int argc, char* argv[]) {
   if (argc <= 1) {
     PrintHelp(argv[0]);
   }
@@ -190,7 +190,7 @@ static int TileARGBScale(const uint8_t* src_argb,
   return 0;
 }
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
   ParseOptions(argc, argv);
 
   // Open original file (first file argument)

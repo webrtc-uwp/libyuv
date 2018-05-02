@@ -151,7 +151,7 @@ void PrintHelp(const char* program) {
   exit(0);
 }
 
-void ParseOptions(int argc, const char* argv[]) {
+void ParseOptions(int argc, char* argv[]) {
   if (argc <= 1) {
     PrintHelp(argv[0]);
   }
@@ -321,7 +321,7 @@ bool UpdateMetrics(uint8_t* ch_org,
   return ismin;
 }
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
   ParseOptions(argc, argv);
   if (!do_psnr && !do_ssim) {
     do_psnr = true;

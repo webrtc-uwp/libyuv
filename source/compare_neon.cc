@@ -21,6 +21,15 @@ extern "C" {
 #if !defined(LIBYUV_DISABLE_NEON) && defined(__ARM_NEON__) && \
     !defined(__aarch64__)
 
+  /* !!! IMPORTANT: Following method has been ported to pure assembler to compare_neon.asm, 
+   * because MS Visual Studio doesn't support inline assembler for ARM.
+   *  
+   *  ALL CHANGES IN METHOD IMPLEMENTATION HAS TO BE DONE ALSO IN compare_neon.asm
+   *
+   * Eventually, only pure assembler implementation should be used for all platforms
+   * to avoid code duplication.
+  */
+
 // 256 bits at a time
 // uses short accumulator which restricts count to 131 KB
 uint32_t HammingDistance_NEON(const uint8_t* src_a,

@@ -420,7 +420,7 @@ LibYUVCompareTest::LibYUVCompareTest()
                        1280.0);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 #ifdef LIBYUV_USE_GFLAGS
   // AllowCommandLineParsing allows us to ignore flags passed on to us by

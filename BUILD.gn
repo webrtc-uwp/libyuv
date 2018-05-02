@@ -51,10 +51,16 @@ group("libyuv") {
   deps = []
 
   if (is_win && target_cpu == "x64") {
-    # Compile with clang in order to get inline assembly
-    public_deps = [
-      ":libyuv_internal(//build/toolchain/win:win_clang_x64)",
-    ]
+    if (current_os == "winuwp") {
+      public_deps = [
+        ":libyuv_internal",
+      ]
+    } else {
+      # Compile with clang in order to get inline assembly
+      public_deps = [
+        ":libyuv_internal(//build/toolchain/win:win_clang_x64)",
+      ]
+    }
   } else {
     public_deps = [
       ":libyuv_internal",
@@ -152,6 +158,9 @@ static_library("libyuv_internal") {
     # Needed to pull in libjpeg headers. Can't add //third_party:jpeg to deps
     # because in Windows x64 build it will get compiled with clang.
     deps += [ "//third_party:jpeg_includes" ]
+  }
+  if (current_os == "winuwp") {
+    deps += [ "//third_party/winuwp_compat:force_include_std" ]
   }
 
   # Always enable optimization for Release and NaCl builds (to workaround
@@ -304,6 +313,9 @@ if (libyuv_include_tests) {
     if (is_android) {
       deps += [ "//testing/android/native_test:native_test_native_code" ]
     }
+    if (current_os == "winuwp") {
+      deps += [ "//third_party/winuwp_compat:force_include_std" ]
+    }
 
     # TODO(YangZhang): These lines can be removed when high accuracy
     # YUV to RGB to Neon is ported.
@@ -334,6 +346,9 @@ if (libyuv_include_tests) {
     if (is_linux) {
       cflags = [ "-fexceptions" ]
     }
+    if (current_os == "winuwp") {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
+    }
   }
 
   executable("yuvconvert") {
@@ -347,6 +362,9 @@ if (libyuv_include_tests) {
     ]
     if (is_linux) {
       cflags = [ "-fexceptions" ]
+    }
+    if (current_os == "winuwp") {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 
@@ -364,6 +382,9 @@ if (libyuv_include_tests) {
 
     if (!is_ios && !libyuv_disable_jpeg) {
       defines = [ "HAVE_JPEG" ]
+    }
+    if (current_os == "winuwp") {
+      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 

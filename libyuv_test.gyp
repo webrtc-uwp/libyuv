@@ -18,8 +18,8 @@
       'type': '<(gtest_target_type)',
       'dependencies': [
         'libyuv.gyp:libyuv',
-        'testing/gtest.gyp:gtest',
-        'third_party/gflags/gflags.gyp:gflags',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
+        '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
       ],
       'direct_dependent_settings': {
         'defines': [
@@ -50,6 +50,11 @@
         'unit_test/video_common_test.cc',
       ],
       'conditions': [
+        ['OS=="win" and OS_RUNTIME=="winuwp"', {
+          'defines': [
+            'WINUWP',
+          ],
+        }],
         ['OS=="linux"', {
           'cflags': [
             '-fexceptions',
@@ -84,6 +89,7 @@
         [ '(target_arch == "armv7" or target_arch == "armv7s" \
           or (target_arch == "arm" and arm_version >= 7) \
           or target_arch == "arm64") \
+          or winuwp_platform=="win_phone" or winuwp_platform=="win10_arm" \
           and (arm_neon == 1 or arm_neon_optional == 1)', {
           'defines': [
             'LIBYUV_NEON'
@@ -185,7 +191,7 @@
             'input_shlib_path': '<(SHARED_LIB_DIR)/(SHARED_LIB_PREFIX)libyuv_unittest<(SHARED_LIB_SUFFIX)',
           },
           'includes': [
-            'build/apk_test.gypi',
+            # 'build/apk_test.gypi',
           ],
           'dependencies': [
             'libyuv_unittest',
