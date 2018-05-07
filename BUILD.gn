@@ -177,18 +177,21 @@ if (libyuv_use_neon) {
     sources = [
       # ARM Source Files
       "source/compare_neon64.cc",
-      "source/rotate_neon.cc",
       "source/rotate_neon64.cc",
-      "source/row_neon.cc",
       "source/row_neon64.cc",
-      "source/scale_neon.cc",
       "source/scale_neon64.cc",
     ]
     
     if ((current_cpu == "arm" || current_cpu == "arm64") && current_os == "win" && target_os == "winuwp") {
-      sources += [ "source/compare_neon.asm" ]
+      sources += [ "source/compare_neon.asm",
+                   "source/rotate_neon.asm",
+                   "source/row_neon.asm",
+                   "source/scale_neon.asm",]
     } else {
-      sources += [ "source/compare_neon.cc" ]
+      sources += [ "source/compare_neon.cc",
+                   "source/rotate_neon.cc",
+                   "source/row_neon.cc",
+                   "source/scale_neon.cc",]
     }
     
     public_configs = [ ":libyuv_config" ]

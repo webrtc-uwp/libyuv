@@ -359,7 +359,7 @@ ScaleRowDown38_NEON PROC
   bx         lr
   ENDP
 
-// 32x3 -> 12x1
+; 32x3 -> 12x1
 ScaleRowDown38_3_Box_NEON PROC
   ; input
   ;   r0 = uint8* src_ptr
@@ -629,7 +629,8 @@ ScaleAddRows_NEON PROC
 
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
-MACRO LOAD2_DATA8_LANE  $n
+  MACRO 
+  LOAD2_DATA8_LANE  $n
   lsr        r5, r3, #16
   add        r6, r1, r5
   add        r3, r3, r4
@@ -987,7 +988,8 @@ ScaleARGBRowDownEvenBox_NEON PROC
 ; clang-format off
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
-MACRO LOAD1_DATA32_LANE $dn,  $n
+  MACRO 
+  LOAD1_DATA32_LANE $dn,  $n
   lsr        r5, r3, #16
   add        r6, r1, r5, lsl #2
   add        r3, r3, r4
@@ -1038,7 +1040,8 @@ ScaleARGBCols_NEON PROC
 ; clang-format off
 ; TODO(Yang Zhang): Investigate less load instructions for
 ; the x/dx stepping
-MACRO LOAD2_DATA32_LANE $dn1, $dn2, $n
+  MACRO 
+  LOAD2_DATA32_LANE $dn1, $dn2, $n
   lsr        r5, r3, #16
   add        r6, r1, r5, lsl #2
   add        r3, r3, r4
