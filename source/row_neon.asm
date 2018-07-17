@@ -141,14 +141,16 @@ kYToRgb     DCD   0x0101 * YG, 0, 0, 0
 ; ------- MACROS ------------------------
 
 ; Read 8 Y, 4 U and 4 V from 422
-MACRO READYUV422
+  MACRO
+  READYUV422
   vld1.8     {d0}, [r0]!
   vld1.32    {d2[0]}, [r1]!
   vld1.32    {d2[1]}, [r2]!
   MEND
 
 ; Read 8 Y, 8 U and 8 V from 444
-MACRO READYUV444
+  MACRO
+  READYUV444
   vld1.8     {d0}, [r0]!
   vld1.8     {d2}, [r1]!
   vld1.8     {d3}, [r2]!
@@ -157,14 +159,16 @@ MACRO READYUV444
   MEND
 
 ; Read 8 Y, and set 4 U and 4 V to 128
-MACRO READYUV400
+  MACRO
+  READYUV400
   MEMACCESS 0
   vld1.8     {d0}, [r0]!
   vmov.u8    d2, #128
   MEND
 
 ; Read 8 Y and 4 UV from NV12
-MACRO READNV12
+  MACRO
+  READNV12
   vld1.8     {d0}, [r0]!
   vld1.8     {d2}, [r1]!
   vmov.u8    d3, d2                         ; split odd/even uv apart
@@ -173,7 +177,8 @@ MACRO READNV12
   MEND
 
 ; Read 8 Y and 4 VU from NV21
-MACRO READNV21
+  MACRO
+  READNV21
   vld1.8     {d0}, [r0]!
   vld1.8     {d2}, [r1]!
   vmov.u8    d3, d2                         ; split odd/even uv apart
@@ -182,7 +187,8 @@ MACRO READNV21
   MEND
 
 ; Read 8 YUY2
-MACRO READYUY2
+  MACRO
+  READYUY2
   vld2.8     {d0, d2}, [r0]!
   vmov.u8    d3, d2
   vuzp.u8    d2, d3
@@ -190,7 +196,8 @@ MACRO READYUY2
   MEND
 
 ; Read 8 UYVY
-MACRO READUYVY
+  MACRO
+  READUYVY
   vld2.8     {d2, d3}, [r0]!
   vmov.u8    d0, d3
   vmov.u8    d3, d2
@@ -212,7 +219,8 @@ MACRO READUYVY
 ;};
 ;
 
-MACRO YUVTORGB_SETUP $r
+  MACRO
+  YUVTORGB_SETUP $r
   push       {r0}
   mov        r0, $r                 ; adr        r0, kUVToRB
   vld1.8     {d24}, [r0]
@@ -227,7 +235,8 @@ MACRO YUVTORGB_SETUP $r
   pop        {r0}
   MEND
 
-MACRO YUVTORGB
+  MACRO
+  YUVTORGB
   vmull.u8   q8, d2, d24                     ; u/v B/R component
   vmull.u8   q9, d2, d25                     ; u/v G component
   vmovl.u8   q0, d0                          ; Y
@@ -255,7 +264,8 @@ MACRO YUVTORGB
   vqshrun.s16 d21, q0, #6                    ; G
   MEND
 
-MACRO ARGBTORGB565
+  MACRO
+  ARGBTORGB565
   vshll.u8    q0, d22, #8                     ; R
   vshll.u8    q8, d21, #8                     ; G
   vshll.u8    q9, d20, #8                     ; B
@@ -263,7 +273,8 @@ MACRO ARGBTORGB565
   vsri.16     q0, q9, #11                     ; RGB
   MEND
 
-MACRO ARGBTOARGB1555
+  MACRO
+  ARGBTOARGB1555
   vshll.u8    q0, d23, #8                     ; A
   vshll.u8    q8, d22, #8                     ; R
   vshll.u8    q9, d21, #8                     ; G
@@ -274,7 +285,8 @@ MACRO ARGBTOARGB1555
   MEND
 
 
-MACRO ARGBTOARGB4444
+  MACRO
+  ARGBTOARGB4444
   vshr.u8    d20, d20, #4                     ; B
   vbic.32    d21, d21, d4                     ; G
   vshr.u8    d22, d22, #4                     ; R
@@ -285,7 +297,8 @@ MACRO ARGBTOARGB4444
   MEND
 
 
-MACRO RGB565TOARGB
+  MACRO
+  RGB565TOARGB
   vshrn.u16  d6, q0, #5                       ; G xxGGGGGG
   vuzp.u8    d0, d1                           ; d0 xxxBBBBB RRRRRxxx
   vshl.u8    d6, d6, #2                       ; G GGGGGG00 upper 6
@@ -298,7 +311,8 @@ MACRO RGB565TOARGB
   vorr.u8    d1, d4, d6                       ; G
   MEND
 
-MACRO ARGB1555TOARGB
+  MACRO
+  ARGB1555TOARGB
   vshrn.u16  d7, q0, #8                       ; A Arrrrrxx
   vshr.u8    d6, d7, #2                       ; R xxxRRRRR
   vshrn.u16  d5, q0, #5                       ; G xxxGGGGG
@@ -314,7 +328,8 @@ MACRO ARGB1555TOARGB
   MEND
 
 ; RGB555TOARGB is same as ARGB1555TOARGB but ignores alpha.
-MACRO RGB555TOARGB
+  MACRO
+  RGB555TOARGB
   vshrn.u16  d6, q0, #5                       ; G xxxGGGGG
   vuzp.u8    d0, d1                           ; d0 xxxBBBBB xRRRRRxx
   vshl.u8    d6, d6, #3                       ; G GGGGG000 upper 5
@@ -327,7 +342,8 @@ MACRO RGB555TOARGB
   vorr.u8    d1, d4, d6                       ; G
   MEND
 
-MACRO ARGB4444TOARGB
+  MACRO
+  ARGB4444TOARGB
   vuzp.u8    d0, d1                           ; d0 BG, d1 RA
   vshl.u8    q2, q0, #4                       ; B,R BBBB0000
   vshr.u8    q1, q0, #4                       ; G,A 0000GGGG
@@ -339,7 +355,8 @@ MACRO ARGB4444TOARGB
   MEND
 
 ; 16x2 pixels -> 8x1.  pix is number of argb pixels. e.g. 16.
-MACRO RGBTOUV $QB, $QG, $QR
+  MACRO
+  RGBTOUV $QB, $QG, $QR
   vmul.s16   q8, $QB , q10                  ; B
   vmls.s16   q8, $QG , q11                  ; G
   vmls.s16   q8, $QR , q12                  ; R
@@ -418,7 +435,7 @@ I422ToARGBRow_NEON PROC
 1
   READYUV422
   YUVTORGB
-  subs       %4, %4, #8
+  subs       r4, r4, #8
   vst4.8     {d20, d21, d22, d23}, [r3]!
   bgt        %b1
 
@@ -1483,7 +1500,8 @@ ARGBToRGB565DitherRow_NEON PROC
   subs       r3, r3, #8                       ; 8 processed per loop.
   vqadd.u8   d20, d20, d2
   vqadd.u8   d21, d21, d2
-  vqadd.u8   d22, d22, d2                    ARGBTORGB565
+  vqadd.u8   d22, d22, d2                    
+  ARGBTORGB565
   vst1.8     {q0}, [r1]!                      ; store 8 pixels RGB565.
   bgt        %b1
 
@@ -1959,7 +1977,7 @@ RGB24ToUVRow_NEON PROC
   vrshr.u16  q2, q2, #1
 
   subs       r4, r4, #16                      ; 32 processed per loop.
-  RGBTOUV    q0, q1, q2)
+  RGBTOUV    q0, q1, q2
   vst1.8     {d0}, [r2]!                      ; store 8 pixels U.
   vst1.8     {d1}, [r3]!                      ; store 8 pixels V.
   bgt        %b1
@@ -2152,7 +2170,7 @@ ARGB1555ToUVRow_NEON PROC
   vrshr.u16  q5, q5, #1
   vrshr.u16  q6, q6, #1
 
-  subs       %4, %4, #16                      ; 16 processed per loop.
+  subs       r4, r4, #16                      ; 16 processed per loop.
   vmul.s16   q8, q4, q10                      ; B
   vmls.s16   q8, q5, q11                      ; G
   vmls.s16   q8, q6, q12                      ; R
@@ -3158,7 +3176,7 @@ HalfFloat1Row_NEON PROC
   ENDP
 
 ; TODO(fbarchard): multiply by element.
-HalfFloatRow_NEON
+HalfFloatRow_NEON PROC  
   ; input
   ;  r0 = const uint16* src
   ;  r1 = uint16* dst
