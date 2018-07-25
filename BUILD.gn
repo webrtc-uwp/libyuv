@@ -164,10 +164,6 @@ static_library("libyuv_internal") {
     if (libyuv_use_neon) {
         deps += [ ":libyuv_neon(//build/toolchain/win:win_clang_arm)" ]
     }
-  } else {
-      if (libyuv_use_neon) {
-        deps += [ ":libyuv_neon"]
-      }
   }
 
   if (libyuv_use_msa) {
