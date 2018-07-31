@@ -161,13 +161,6 @@ static_library("libyuv_internal") {
   }
   if (current_os == "winuwp") {
     deps += [ "//third_party/winuwp_compat:force_include_std" ]
-    if (libyuv_use_neon) {
-        deps += [ ":libyuv_neon(//build/toolchain/win:win_clang_arm)" ]
-    }
-  }
-
-  if (libyuv_use_msa) {
-    deps += [ ":libyuv_msa" ]
   }
 
   # Always enable optimization for Release and NaCl builds (to workaround
@@ -191,20 +184,18 @@ static_library("libyuv_internal") {
 }
 
 if (libyuv_use_neon) {
-
   static_library("libyuv_neon") {
     sources = [
       # ARM Source Files
+      "source/compare_neon.cc",
       "source/compare_neon64.cc",
+      "source/rotate_neon.cc",
       "source/rotate_neon64.cc",
+      "source/row_neon.cc",
       "source/row_neon64.cc",
+      "source/scale_neon.cc",
       "source/scale_neon64.cc",
     ]
-    
-    sources += [ "source/compare_neon.cc",
-                 "source/rotate_neon.cc",
-                 "source/row_neon.cc",
-                 "source/scale_neon.cc",]
 
     deps = [
       ":libyuv_internal",
@@ -224,10 +215,8 @@ if (libyuv_use_neon) {
 
     if (current_cpu != "arm64") {
       configs -= [ "//build/config/compiler:compiler_arm_fpu" ]
-
+      cflags = [ "-mfpu=neon" ]
     }
-    
-    include_dirs = [ "."]
   }
 }
 
