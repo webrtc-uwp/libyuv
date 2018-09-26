@@ -15,16 +15,6 @@ namespace libyuv {
 extern "C" {
 #endif
 
-  /* !!! IMPORTANT: Following methods has been ported to pure assembler to scale_neon.asm,
-  * because MS Visual Studio doesn't support inline assembler for ARM.
-  *
-  *  ALL CHANGES IN METHODS IMPLEMENTATION HAS TO BE DONE ALSO IN scale_neon.asm
-  *
-  * Eventually, only pure assembler implementation should be used for all platforms
-  * to avoid code duplication.
-  */
-
-
 // This module is for GCC Neon.
 #if !defined(LIBYUV_DISABLE_NEON) && defined(__ARM_NEON__) && \
     !defined(__aarch64__)
