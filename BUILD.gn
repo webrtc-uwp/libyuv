@@ -367,9 +367,6 @@ if (libyuv_include_tests) {
     if (is_linux) {
       cflags = [ "-fexceptions" ]
     }
-    if (current_os == "winuwp") {
-      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
-    }
   }
 
   executable("yuvconvert") {
@@ -382,9 +379,6 @@ if (libyuv_include_tests) {
     ]
     if (is_linux) {
       cflags = [ "-fexceptions" ]
-    }
-    if (current_os == "winuwp") {
-      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 
@@ -401,9 +395,6 @@ if (libyuv_include_tests) {
 
     if (!is_ios && !libyuv_disable_jpeg) {
       defines = [ "HAVE_JPEG" ]
-    }
-    if (current_os == "winuwp") {
-      deps += [ "//third_party/winuwp_compat:wrap_main_utf8_cc" ]
     }
   }
 
