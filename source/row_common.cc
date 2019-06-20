@@ -432,11 +432,11 @@ static __inline int RGBToV(uint8_t r, uint8_t g, uint8_t b) {
     }                                                                        \
   }
 
-MAKEROWY(ARGB, 2, 1, 0, 4)
-MAKEROWY(BGRA, 1, 2, 3, 4)
-MAKEROWY(ABGR, 0, 1, 2, 4)
-MAKEROWY(RGBA, 3, 2, 1, 4)
-MAKEROWY(RGB24, 2, 1, 0, 3)
+MAKEROWY(ARGB, 1, 2, 3, 4)
+MAKEROWY(BGRA, 2, 1, 0, 4)
+MAKEROWY(ABGR, 3, 2, 1, 4)
+MAKEROWY(RGBA, 0, 1, 2, 4)
+MAKEROWY(RGB24, 0, 1, 2, 3)
 MAKEROWY(RAW, 0, 1, 2, 3)
 #undef MAKEROWY
 
